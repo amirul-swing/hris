@@ -1,0 +1,1228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Swing HRIS Attendance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: fixed sidebar + scrolling workspace; Swing deck language (gradient hero, lavender highlight cards, letter-spaced eyebrows) */
+:root {
+  --bg: #F7F4FE;
+  --surface: #FFFFFF;
+  --surface-2: #F5EFFF;
+  --line: #ECE6F7;
+  --line-strong: #D9C8FA;
+  --ink: #16122C;
+  --muted: #5F5A74;
+  --faint: #8D88A2;
+  --accent: #6A1DE4;
+  --accent-ink: #FFFFFF;
+  --magenta: #D615CF;
+  --grad: linear-gradient(118deg, #5A14E0 0%, #9A12DC 55%, #E013D0 100%);
+  --ok: #0F7A57; --ok-bg: #E3F5EC;
+  --warn: #8E5300; --warn-bg: #FFF1D9;
+  --bad: #BB2439; --bad-bg: #FDE8EB;
+  --shadow: 0 1px 2px rgba(45, 20, 100, .05), 0 10px 28px rgba(70, 25, 150, .07);
+  --overlay: rgba(22, 18, 44, .45);
+  --font-display: "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Karla", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E0B1C; --surface: #17132A; --surface-2: #211839; --line: #2A2345; --line-strong: #4B3A80;
+    --ink: #F2EFFB; --muted: #B4AECB; --faint: #807A9A; --accent: #B78EFF; --accent-ink: #16122C; --magenta: #F270E8;
+    --ok: #55D6A5; --ok-bg: #11302A; --warn: #F3B85E; --warn-bg: #33270F; --bad: #FF8494; --bad-bg: #3A1821;
+    --shadow: 0 1px 2px rgba(0,0,0,.3); --overlay: rgba(5, 3, 14, .7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E0B1C; --surface: #17132A; --surface-2: #211839; --line: #2A2345; --line-strong: #4B3A80;
+  --ink: #F2EFFB; --muted: #B4AECB; --faint: #807A9A; --accent: #B78EFF; --accent-ink: #16122C; --magenta: #F270E8;
+  --ok: #55D6A5; --ok-bg: #11302A; --warn: #F3B85E; --warn-bg: #33270F; --bad: #FF8494; --bad-bg: #3A1821;
+  --shadow: 0 1px 2px rgba(0,0,0,.3); --overlay: rgba(5, 3, 14, .7);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+h1, h2, h3, h4 { font-family: var(--font-display); margin: 0; letter-spacing: -0.015em; text-wrap: balance; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--font-mono); font-size: .92em; }
+
+.eyebrow { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 11.5px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); }
+.eyebrow::before { content: ""; width: 22px; height: 2px; background: currentColor; border-radius: 2px; }
+.label { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+.faint { color: var(--faint); }
+.grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* Logo */
+.logo { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: -0.03em; color: var(--accent); }
+.logo svg { width: 24px; height: 24px; }
+.logo.on-grad { color: #fff; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: 999px; padding: 9px 18px; font-family: var(--font-display); font-weight: 700; font-size: 14px; line-height: 1.2; background: var(--surface); color: var(--ink); border-color: var(--line-strong); transition: transform .12s ease, box-shadow .12s ease, background .12s ease; white-space: nowrap; }
+.btn:hover { background: var(--surface-2); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--grad); color: #fff; border-color: transparent; box-shadow: 0 6px 16px rgba(120, 20, 220, .25); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.danger { color: var(--bad); border-color: var(--bad-bg); background: var(--bad-bg); }
+.btn.ok { color: var(--ok); border-color: var(--ok-bg); background: var(--ok-bg); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--accent); padding-inline: 10px; }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.sm { padding: 6px 12px; font-size: 13px; }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+/* Forms */
+.field { display: grid; gap: 6px; min-width: 0; }
+.field > span { font-weight: 600; font-size: 13.5px; }
+.field small { color: var(--faint); font-size: 12.5px; }
+.input, select.input, textarea.input { width: 100%; border: 1px solid var(--line-strong); background: var(--surface); border-radius: var(--radius-sm); padding: 10px 12px; min-height: 42px; }
+textarea.input { min-height: 84px; resize: vertical; }
+.input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.form-grid .full { grid-column: 1 / -1; }
+.form-grid.hol-grid { grid-template-columns: minmax(0, 180px) minmax(0, 1fr) auto; align-items: end; }
+[hidden] { display: none !important; }
+.error-text { color: var(--bad); font-size: 13.5px; font-weight: 600; }
+.seg { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); gap: 2px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; border-radius: 999px; padding: 6px 14px; font-weight: 600; font-size: 13.5px; color: var(--muted); }
+.seg button.on { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; min-width: 0; }
+.card.hl { background: var(--surface-2); border-color: var(--line-strong); box-shadow: none; }
+.card.grad { background: var(--grad); color: #fff; border: 0; }
+.card.grad .label, .card.grad .muted { color: rgba(255,255,255,.85); }
+.card h3 { font-size: 18px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.stack { display: grid; gap: 18px; }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.split { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+
+/* Pills */
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.pending { color: var(--warn); background: var(--warn-bg); }
+.pill.approved, .pill.active { color: var(--ok); background: var(--ok-bg); }
+.pill.rejected, .pill.inactive { color: var(--bad); background: var(--bad-bg); }
+.pill.cancelled { color: var(--faint); background: var(--surface-2); }
+.tag { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 6px; font-size: 12px; font-weight: 700; background: var(--surface-2); color: var(--accent); border: 1px solid var(--line-strong); white-space: nowrap; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; margin-inline: -4px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-family: var(--font-display); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; padding: 10px 12px; border-bottom: 1.5px solid var(--line-strong); white-space: nowrap; }
+td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.actions { white-space: nowrap; text-align: right; }
+
+/* Login */
+.login { min-height: 100%; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+.login-hero { background: var(--grad); color: #fff; padding: 48px clamp(24px, 5vw, 72px); display: flex; flex-direction: column; justify-content: space-between; gap: 40px; }
+.login-hero .eyebrow { color: rgba(255,255,255,.9); }
+.login-hero h1 { font-size: clamp(36px, 5vw, 60px); line-height: 1.02; font-weight: 800; margin-block: 18px 16px; }
+.login-hero p { font-size: 17px; max-width: 44ch; color: rgba(255,255,255,.9); }
+.hero-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.hero-cards div { border: 1px solid rgba(255,255,255,.28); background: rgba(255,255,255,.1); border-radius: 14px; padding: 14px; font-size: 13.5px; }
+.hero-cards strong { display: block; font-family: var(--font-display); font-size: 16px; margin-top: 4px; }
+.login-panel { display: grid; place-items: center; padding: 40px 24px; }
+.login-box { width: min(420px, 100%); display: grid; gap: 22px; }
+.login-box h2 { font-size: 30px; }
+.demo-list { display: grid; gap: 8px; }
+.demo { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 14px; }
+.demo:hover { border-color: var(--line-strong); background: var(--surface-2); }
+.demo b { font-family: var(--font-display); display: block; }
+.pw-wrap { position: relative; }
+.pw-wrap .input { padding-right: 70px; }
+.pw-wrap button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); }
+
+/* Shell */
+.shell { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: 100%; }
+.side { background: var(--surface); border-right: 1px solid var(--line); padding: 24px 16px; display: flex; flex-direction: column; gap: 24px; position: sticky; top: 0; height: 100vh; }
+.side-brand { display: grid; gap: 6px; padding-inline: 8px; }
+.side-brand small { font-family: var(--font-display); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); font-weight: 700; }
+.nav { display: grid; gap: 4px; }
+.nav button { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 0; background: transparent; text-align: left; padding: 10px 12px; border-radius: 10px; font-weight: 600; color: var(--muted); }
+.nav button:hover { background: var(--surface-2); color: var(--ink); }
+.nav button.on { background: var(--surface-2); color: var(--accent); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.nav-group { display: grid; gap: 4px; }
+.nav-group + .nav-group { margin-top: 14px; }
+.nav-label { font-family: var(--font-display); font-size: 10.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); padding: 0 12px 4px; }
+.org { display: grid; gap: 10px; }
+.org > *, .org-children > *, .org-item { min-width: 0; }
+.org-children { display: grid; gap: 10px; margin-left: 22px; padding-left: 18px; border-left: 2px solid var(--line-strong); }
+.org-node { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); }
+.org-node.leader { border-color: var(--line-strong); background: var(--surface-2); box-shadow: none; }
+.org-node .grow { flex: 1; min-width: 160px; }
+.org-node b { font-family: var(--font-display); }
+.org-node select { width: auto; max-width: 100%; min-height: 36px; padding: 6px 10px; font-size: 13.5px; }
+.nav .count { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--grad); color: #fff; font-size: 12px; font-weight: 700; text-align: center; }
+.side-foot { margin-top: auto; display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
+.me { display: flex; gap: 10px; align-items: center; padding-inline: 4px; min-width: 0; }
+.me div { min-width: 0; }
+.me b { display: block; font-family: var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.avatar { width: 36px; height: 36px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--grad); color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 13px; }
+.avatar.lg { width: 44px; height: 44px; font-size: 15px; }
+.main { padding: 32px clamp(16px, 4vw, 44px) 64px; display: grid; gap: 24px; align-content: start; min-width: 0; }
+.page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.page-head h1 { font-size: clamp(28px, 3.4vw, 40px); font-weight: 800; margin-top: 8px; }
+.page-head p { color: var(--muted); margin-top: 6px; max-width: 64ch; }
+
+/* Balance tiles */
+.balance .big { font-family: var(--font-display); font-weight: 800; font-size: 44px; line-height: 1; margin-top: 12px; }
+.balance .of { color: var(--muted); font-size: 14px; margin-top: 6px; }
+.meter { height: 8px; border-radius: 999px; background: var(--surface-2); margin-top: 16px; overflow: hidden; display: flex; border: 1px solid var(--line); }
+.meter i { display: block; height: 100%; }
+.meter .used { background: var(--grad); }
+.meter .pend { background: repeating-linear-gradient(45deg, var(--line-strong) 0 4px, transparent 4px 8px); }
+.balance .meta { display: flex; gap: 14px; font-size: 13px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
+.stat .big { font-family: var(--font-display); font-weight: 800; font-size: 40px; line-height: 1; margin-top: 10px; }
+
+/* Lists */
+.list { display: grid; }
+.list-item { display: flex; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.list-item:last-child { border-bottom: 0; padding-bottom: 0; }
+.list-item:first-child { padding-top: 0; }
+.list-item .grow { flex: 1; min-width: 0; }
+.list-item b { font-family: var(--font-display); }
+.date-chip { flex: none; width: 52px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface-2); text-align: center; padding: 6px 0; line-height: 1.1; }
+.date-chip b { display: block; font-size: 20px; color: var(--accent); }
+.date-chip small { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.empty { color: var(--faint); padding: 18px 0; text-align: center; }
+
+/* Approvals */
+.approval { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: start; }
+.approval .who { display: flex; gap: 12px; align-items: center; }
+.approval .facts { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 14px; font-size: 14px; }
+.approval .facts div { display: grid; }
+.approval .facts small { color: var(--faint); font-size: 12px; font-weight: 600; }
+.approval blockquote { margin: 14px 0 0; padding: 10px 14px; border-radius: 10px; background: var(--surface-2); color: var(--ink); font-size: 14px; }
+.approval .btns { display: grid; gap: 8px; }
+
+/* Notes and banners */
+.note { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line-strong); font-size: 14px; }
+.note.warn { background: var(--warn-bg); border-color: transparent; color: var(--warn); }
+.note.bad { background: var(--bad-bg); border-color: transparent; color: var(--bad); }
+.note b { font-family: var(--font-display); }
+
+/* Summary panel */
+.summary { position: sticky; top: 24px; }
+.summary dl { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; margin: 16px 0 0; font-size: 14px; }
+.summary dt { color: rgba(255,255,255,.8); }
+.summary dd { margin: 0; text-align: right; font-weight: 700; }
+.summary .days { font-family: var(--font-display); font-size: 56px; font-weight: 800; line-height: 1; margin-top: 10px; }
+.skipped { margin-top: 14px; display: grid; gap: 6px; font-size: 13px; }
+.skipped span { display: flex; justify-content: space-between; gap: 10px; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,.14); }
+
+/* Calendar */
+.cal-wrap { overflow-x: auto; }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(110px, 1fr)); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; min-width: 770px; }
+.cal .dow { background: var(--surface-2); padding: 8px 10px; font-family: var(--font-display); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.cal .day { min-height: 108px; padding: 8px; border-top: 1px solid var(--line); border-left: 1px solid var(--line); display: grid; gap: 4px; align-content: start; background: var(--surface); }
+.cal .day:nth-child(7n+1) { border-left: 0; }
+.cal .day.out { background: var(--bg); }
+.cal .day.out .d { color: var(--faint); }
+.cal .day.weekend { background: color-mix(in srgb, var(--surface-2) 55%, var(--surface)); }
+.cal .day.today .d { background: var(--grad); color: #fff; border-radius: 999px; padding: 0 7px; justify-self: start; }
+.cal .d { font-family: var(--font-display); font-weight: 700; font-size: 14px; }
+.cal .hol { font-size: 11.5px; font-weight: 700; color: var(--magenta); line-height: 1.25; }
+.cal .who { font-size: 12px; padding: 2px 7px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal .who.pend { background: transparent; border-style: dashed; color: var(--muted); }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid var(--line-strong); background: var(--surface-2); }
+.legend i.pend { border-style: dashed; background: transparent; }
+.legend i.hol { background: var(--magenta); border-color: var(--magenta); }
+
+/* Credentials */
+.cred { display: grid; gap: 12px; }
+.cred-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px dashed var(--line-strong); border-radius: 12px; padding: 12px 14px; background: var(--surface-2); flex-wrap: wrap; }
+.cred-row small { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; font-family: var(--font-display); }
+.cred-row .mono { font-size: 18px; font-weight: 600; user-select: all; word-break: break-all; }
+
+/* Modal + toast */
+.overlay { position: fixed; inset: 0; background: var(--overlay); display: grid; place-items: center; padding: 16px; z-index: 50; }
+.modal { width: min(560px, 100%); max-height: calc(100% - 32px); overflow-y: auto; background: var(--surface); border-radius: 20px; padding: 26px; box-shadow: 0 30px 80px rgba(20, 5, 60, .35); display: grid; gap: 18px; }
+.modal h2 { font-size: 24px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 12px 20px; border-radius: 999px; font-weight: 600; font-size: 14px; z-index: 60; box-shadow: var(--shadow); max-width: calc(100% - 32px); text-align: center; }
+
+.mobile-bar { display: none; }
+
+@media (max-width: 1100px) {
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .summary { position: static; }
+}
+@media (max-width: 860px) {
+  .login { grid-template-columns: minmax(0, 1fr); }
+  .login-hero { padding: 32px 20px; }
+  .hero-cards { grid-template-columns: minmax(0, 1fr); }
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .side { position: static; height: auto; padding: 14px 16px; gap: 12px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .side-brand { display: flex; align-items: center; justify-content: space-between; padding: 0; }
+  .nav { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
+  .nav-group { display: contents; }
+  .nav-label { display: none; }
+  .org-children { margin-left: 8px; padding-left: 10px; }
+  .org-node .grow { min-width: 0; flex-basis: calc(100% - 60px); }
+  .org-node label { flex: 1 1 100%; min-width: 0; }
+  .org-node select { width: 100%; min-width: 0; }
+  .nav button { white-space: nowrap; flex: none; }
+  .side-foot { margin: 0; padding-top: 10px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .side-foot .btn-row { display: flex; gap: 6px; }
+  .grid-2 { grid-template-columns: minmax(0, 1fr); }
+  .approval { grid-template-columns: minmax(0, 1fr); }
+  .approval .btns { grid-auto-flow: column; justify-content: start; }
+  .main { padding-top: 22px; }
+}
+@media (max-width: 520px) {
+  .grid-4 { grid-template-columns: minmax(0, 1fr); }
+  .form-grid, .form-grid.hol-grid { grid-template-columns: minmax(0, 1fr); }
+  .balance .big { font-size: 38px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function () {
+  const STORE_KEY = 'swing-hris-attendance-v2';
+  const ROLE_LABEL = { admin: 'HR admin', leader: 'Leader', reportee: 'Reportee' };
+  const GRADES = ['1.1', '1.2', '2.1', '2.2', '3.1', '3.2', '4.1', '4.2'];
+  const COUNTRIES = { ID: 'Indonesia', MY: 'Malaysia' };
+  const DEPARTMENTS = ['Product', 'Tech', 'Operations', 'Growth', 'Marketing', 'People', 'Finance', 'Regional', 'Business'];
+  const LOGO_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M18.4 8.2A7.5 7.5 0 1 0 19.5 12"/><path d="M5 19 19.5 4.5"/><path d="M13.5 4.5h6v6"/></svg>';
+
+  const app = document.getElementById('app');
+  const ui = { view: null, reqFilter: 'all', approvalsTab: 'pending', calMonth: null, calCountry: 'all', holCountry: 'ID', empQuery: '', confirmCancel: null, modal: null, draft: null };
+
+  // ---------- dates ----------
+  const pad = n => String(n).padStart(2, '0');
+  const toISO = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const fromISO = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const todayISO = () => toISO(new Date());
+  const addDays = (iso, n) => { const d = fromISO(iso); d.setDate(d.getDate() + n); return toISO(d); };
+  const isWeekend = iso => { const g = fromISO(iso).getDay(); return g === 0 || g === 6; };
+  const nextWorkday = (iso, n) => { let d = iso; while (isWeekend(d)) d = addDays(d, 1); let left = n || 0; while (left > 0) { d = addDays(d, 1); if (!isWeekend(d)) left--; } return d; };
+  const fmt = (iso, opts) => fromISO(iso).toLocaleDateString('en-GB', opts || { day: 'numeric', month: 'short', year: 'numeric' });
+  const fmtShort = iso => fmt(iso, { weekday: 'short', day: 'numeric', month: 'short' });
+  const fmtRange = (a, b) => a === b ? fmt(a, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : fmt(a, { day: 'numeric', month: 'short' }) + ' - ' + fmt(b);
+  const fmtDays = n => (Number.isInteger(n) ? n : n.toFixed(1)) + (n === 1 ? ' day' : ' days');
+
+  // ---------- seed ----------
+  function seedHolidays() {
+    return {
+      ID: [
+        ['2026-01-01', 'New Year\'s Day'], ['2026-01-16', 'Isra Mi\'raj'], ['2026-02-17', 'Chinese New Year'],
+        ['2026-03-19', 'Nyepi (Day of Silence)'], ['2026-03-20', 'Idul Fitri'], ['2026-03-21', 'Idul Fitri (day 2)'],
+        ['2026-04-03', 'Good Friday'], ['2026-05-01', 'Labour Day'], ['2026-05-14', 'Ascension of Jesus Christ'],
+        ['2026-05-27', 'Idul Adha'], ['2026-05-31', 'Vesak Day'], ['2026-06-01', 'Pancasila Day'],
+        ['2026-06-16', 'Islamic New Year'], ['2026-08-17', 'Independence Day'], ['2026-08-25', 'Prophet Muhammad\'s Birthday'],
+        ['2026-12-25', 'Christmas Day']
+      ].map(([date, name]) => ({ date, name })),
+      MY: [
+        ['2026-01-01', 'New Year\'s Day'], ['2026-02-01', 'Thaipusam'], ['2026-02-17', 'Chinese New Year'],
+        ['2026-02-18', 'Chinese New Year (day 2)'], ['2026-03-20', 'Hari Raya Aidilfitri'], ['2026-03-21', 'Hari Raya Aidilfitri (day 2)'],
+        ['2026-05-01', 'Labour Day'], ['2026-05-27', 'Hari Raya Haji'], ['2026-05-31', 'Wesak Day'],
+        ['2026-06-01', 'Agong\'s Birthday'], ['2026-06-17', 'Awal Muharram'], ['2026-08-25', 'Prophet Muhammad\'s Birthday'],
+        ['2026-08-31', 'Merdeka Day'], ['2026-09-16', 'Malaysia Day'], ['2026-11-08', 'Deepavali'], ['2026-12-25', 'Christmas Day']
+      ].map(([date, name]) => ({ date, name }))
+    };
+  }
+
+  function seed() {
+    const t = todayISO();
+    const s = {
+      seq: { req: 0 },
+      sessionUserId: null,
+      leaveTypes: [
+        { code: 'AL', name: 'Annual leave', paid: true, quota: { ID: 12, MY: 14 }, docRule: 'none' },
+        { code: 'SL', name: 'Sick leave', paid: true, quota: { ID: 14, MY: 14 }, docRule: 'over1' },
+        { code: 'SP', name: 'Special leave', paid: true, quota: { ID: 3, MY: 3 }, docRule: 'always', hint: 'Marriage, child\'s birth, bereavement' },
+        { code: 'MT', name: 'Maternity leave', paid: true, quota: { ID: 90, MY: 98 }, docRule: 'always' },
+        { code: 'UL', name: 'Unpaid leave', paid: false, quota: null, docRule: 'none' }
+      ],
+      holidays: seedHolidays(),
+      employees: [
+        { id: 'SW-ID-0001', name: 'Nadia Kartika', email: 'nadia@getswing.app', country: 'ID', department: 'People', title: 'People Ops Lead', grade: '2.2', role: 'admin', managerId: 'SW-ID-0007', joinDate: '2023-02-01', password: 'swing-admin', mustChange: false, active: true },
+        { id: 'SW-ID-0002', name: 'Rina Puspita', email: 'rina@getswing.app', country: 'ID', department: 'Operations', title: 'Growth Operations Associate', grade: '1.2', role: 'reportee', managerId: 'SW-ID-0008', joinDate: '2024-06-10', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-MY-0003', name: 'Aiman Hakim', email: 'aiman@getswing.app', country: 'MY', department: 'Operations', title: 'Country Manager', grade: '3.1', role: 'leader', managerId: 'SW-ID-0007', joinDate: '2022-09-05', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-ID-0004', name: 'Dimas Pratama', email: 'dimas@getswing.app', country: 'ID', department: 'Tech', title: 'Tech Lead', grade: '3.1', role: 'leader', managerId: 'SW-ID-0007', joinDate: '2023-11-20', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-MY-0005', name: 'Tan Mei Ling', email: 'meiling@getswing.app', country: 'MY', department: 'Marketing', title: 'Marketing Specialist', grade: '2.1', role: 'reportee', managerId: 'SW-MY-0003', joinDate: '2024-01-15', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-ID-0006', name: 'Sarah Wijaya', email: '', country: 'ID', department: 'Operations', title: 'Fulfilment Associate', grade: '1.1', role: 'reportee', managerId: 'SW-ID-0008', joinDate: '2025-08-01', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-ID-0007', name: 'Budi Santoso', email: 'budi@getswing.app', country: 'ID', department: 'Business', title: 'Chief Operating Officer', grade: '4.1', role: 'leader', managerId: null, joinDate: '2021-03-01', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-ID-0008', name: 'Fajar Nugroho', email: 'fajar@getswing.app', country: 'ID', department: 'Operations', title: 'Head of Operations ID', grade: '3.1', role: 'leader', managerId: 'SW-ID-0007', joinDate: '2022-01-10', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-ID-0009', name: 'Andi Saputra', email: 'andi@getswing.app', country: 'ID', department: 'Tech', title: 'Engineer', grade: '2.1', role: 'reportee', managerId: 'SW-ID-0004', joinDate: '2025-02-17', password: 'swing2026', mustChange: false, active: true }
+      ],
+      requests: []
+    };
+    const add = (empId, type, start, end, status, extra) => {
+      s.seq.req++;
+      const emp = s.employees.find(e => e.id === empId);
+      const days = countDays(start, end, emp.country, extra && extra.half, s.holidays).days;
+      s.requests.push(Object.assign({ id: 'LV-' + String(s.seq.req).padStart(4, '0'), empId, type, start, end, half: 'none', days, reason: '', attachment: '', status, createdAt: addDays(start, -7), decidedBy: status === 'pending' ? null : (emp.managerId || 'SW-ID-0001'), decidedAt: status === 'pending' ? null : addDays(start, -5), note: '' }, extra || {}, { days }));
+    };
+    const p1 = nextWorkday(addDays(t, -48)), p2 = nextWorkday(addDays(t, -26));
+    add('SW-ID-0002', 'AL', p1, nextWorkday(p1, 2), 'approved', { reason: 'Family trip to Yogyakarta' });
+    add('SW-ID-0002', 'SL', p2, p2, 'approved', { reason: 'Fever', attachment: '' });
+    add('SW-ID-0004', 'UL', nextWorkday(addDays(t, -15)), nextWorkday(addDays(t, -15), 4), 'rejected', { reason: 'Personal travel', note: 'Sprint release week. Please move to the week after and resubmit.' });
+    const offStart = isWeekend(t) ? nextWorkday(t) : t;
+    add('SW-MY-0003', 'AL', offStart, nextWorkday(offStart, 1), 'approved', { reason: 'Hari Raya family visit', createdAt: addDays(t, -12) });
+    add('SW-MY-0005', 'SL', offStart, offStart, 'pending', { reason: 'Gastric flu, clinic visit this morning', attachment: 'MC_Klinik_Mediviron.pdf', createdAt: t });
+    const d1 = nextWorkday(t, 8);
+    add('SW-ID-0004', 'AL', d1, nextWorkday(d1, 4), 'pending', { reason: 'Year-end trip to Lombok', createdAt: addDays(t, -1) });
+    const d2 = nextWorkday(t, 16);
+    add('SW-ID-0006', 'SP', d2, nextWorkday(d2, 2), 'pending', { reason: 'Own wedding', attachment: 'Undangan_pernikahan.pdf', createdAt: addDays(t, -2) });
+    const d5 = nextWorkday(t, 11);
+    add('SW-ID-0009', 'AL', d5, nextWorkday(d5, 1), 'pending', { reason: 'Moving house', createdAt: t });
+    const d6 = nextWorkday(t, 30);
+    add('SW-ID-0008', 'AL', d6, nextWorkday(d6, 3), 'pending', { reason: 'Umrah with parents', createdAt: addDays(t, -3) });
+    const d7 = nextWorkday(addDays(t, -20));
+    add('SW-ID-0009', 'SL', d7, d7, 'approved', { reason: 'Migraine' });
+    const d3 = nextWorkday(t, 4);
+    add('SW-MY-0005', 'AL', d3, nextWorkday(d3, 2), 'approved', { reason: 'Penang with family', createdAt: addDays(t, -9) });
+    const d4 = nextWorkday(t, 22);
+    add('SW-ID-0002', 'AL', d4, nextWorkday(d4, 1), 'pending', { reason: 'Sister\'s graduation in Bandung', createdAt: addDays(t, -1) });
+    return s;
+  }
+
+  // ---------- store ----------
+  let state;
+  function load() {
+    try { const raw = localStorage.getItem(STORE_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
+    return seed();
+  }
+  function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
+
+  // ---------- domain ----------
+  const emp = id => state.employees.find(e => e.id === id);
+  const leaveType = code => state.leaveTypes.find(t => t.code === code);
+  const me = () => state.sessionUserId ? emp(state.sessionUserId) : null;
+  const holidaysOf = (country, hol) => (hol || state.holidays)[country] || [];
+  const holidayOn = (iso, country) => holidaysOf(country).find(h => h.date === iso);
+
+  function countDays(start, end, country, half, hol) {
+    const skipped = [];
+    if (!start || !end || end < start) return { days: 0, skipped };
+    let days = 0;
+    for (let d = start; d <= end; d = addDays(d, 1)) {
+      const h = holidaysOf(country, hol).find(x => x.date === d);
+      if (isWeekend(d)) continue;
+      if (h) { skipped.push({ date: d, name: h.name }); continue; }
+      days++;
+    }
+    if (start === end && half && half !== 'none' && days === 1) days = 0.5;
+    return { days, skipped };
+  }
+
+  function balance(e, code) {
+    const t = leaveType(code);
+    const year = String(new Date().getFullYear());
+    const mine = state.requests.filter(r => r.empId === e.id && r.type === code && r.start.slice(0, 4) === year);
+    const used = mine.filter(r => r.status === 'approved').reduce((a, r) => a + r.days, 0);
+    const pending = mine.filter(r => r.status === 'pending').reduce((a, r) => a + r.days, 0);
+    const quota = t.quota ? Number(t.quota[e.country]) : null;
+    return { quota, used, pending, available: quota == null ? null : quota - used - pending };
+  }
+
+  const directReports = id => state.employees.filter(e => e.managerId === id);
+  const isLeader = u => u.role === 'leader' || (u.role === 'admin' && directReports(u.id).length > 0);
+  function canApprove(u, r) {
+    if (!u || r.empId === u.id || r.status !== 'pending') return false;
+    if (u.role === 'admin') return true;
+    return u.role === 'leader' && emp(r.empId).managerId === u.id;
+  }
+  function approverLabel(e) {
+    const m = e.managerId && emp(e.managerId);
+    return m && m.active ? esc(m.name) + ' or People Ops' : 'People Ops';
+  }
+  function isBelow(candidateId, rootId) {
+    let cur = emp(candidateId), guard = 0;
+    while (cur && cur.managerId && guard++ < 50) { if (cur.managerId === rootId) return true; cur = emp(cur.managerId); }
+    return false;
+  }
+  function leaderOptions(forId, selected) {
+    const opts = state.employees.filter(e => (e.active || e.id === selected) && e.id !== forId && (e.role === 'leader' || e.role === 'admin') && !(forId && isBelow(e.id, forId)));
+    return '<option value="">No one (top of the line)</option>' + opts.map(e => '<option value="' + e.id + '"' + (selected === e.id ? ' selected' : '') + '>' + esc(e.name) + ' · ' + esc(e.title) + '</option>').join('');
+  }
+
+  function docRequired(t, days) {
+    return t.docRule === 'always' || (t.docRule === 'over1' && days > 1);
+  }
+
+  function nextEmpId(country) {
+    const max = state.employees.reduce((m, e) => Math.max(m, Number(e.id.split('-')[2]) || 0), 0);
+    return 'SW-' + country + '-' + String(max + 1).padStart(4, '0');
+  }
+
+  function generatePassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    const buf = new Uint32Array(12);
+    crypto.getRandomValues(buf);
+    const raw = Array.from(buf, n => chars[n % chars.length]).join('');
+    return raw.slice(0, 4) + '-' + raw.slice(4, 8) + '-' + raw.slice(8, 12);
+  }
+
+  const initials = name => name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const statusPill = s => '<span class="pill ' + s + '">' + s[0].toUpperCase() + s.slice(1) + '</span>';
+  const isOn = (r, iso) => r.start <= iso && r.end >= iso && !isWeekend(iso);
+
+  // ---------- toast / modal ----------
+  let toastTimer;
+  function toast(msg) {
+    let el = document.querySelector('.toast');
+    if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    el.textContent = msg; el.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
+  }
+  function openModal(m) { ui.modal = m; render(); }
+  function closeModal() { ui.modal = null; render(); }
+  function copy(text, btn) {
+    const done = () => { toast('Copied to clipboard'); if (btn) { const o = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = o; }, 1500); } };
+    try {
+      navigator.clipboard.writeText(text).then(done, () => toast('Copy is blocked here. Select the text and copy it manually.'));
+    } catch (e) { toast('Copy is blocked here. Select the text and copy it manually.'); }
+  }
+
+  // ---------- render root ----------
+  function render() {
+    const u = me();
+    if (!u) app.innerHTML = loginView();
+    else if (u.mustChange) app.innerHTML = forceChangeView(u);
+    else app.innerHTML = shellView(u);
+    if (ui.modal) app.insertAdjacentHTML('beforeend', '<div class="overlay" data-action="overlay"><div class="modal" role="dialog" aria-modal="true">' + modalView(ui.modal) + '</div></div>');
+    afterRender();
+  }
+
+  // ---------- login ----------
+  function loginView() {
+    const demos = ['SW-ID-0001', 'SW-ID-0007', 'SW-ID-0008', 'SW-ID-0002'].map(emp).filter(e => e && e.active);
+    return '<div class="login">' +
+      '<section class="login-hero">' +
+        '<div class="logo on-grad">' + LOGO_SVG + 'swing</div>' +
+        '<div><div class="eyebrow">People · HRIS · Attendance</div>' +
+        '<h1>Time off,<br>in one place.</h1>' +
+        '<p>Request paid leave and sick leave, track your balance, and see the public holidays for Indonesia and Malaysia. Your leader or People Ops approves it.</p></div>' +
+        '<div class="hero-cards">' +
+          '<div>Paid leave<strong>12-14 days a year</strong></div>' +
+          '<div>Sick leave<strong>MC after day 1</strong></div>' +
+          '<div>Holidays<strong>ID and MY calendars</strong></div>' +
+        '</div>' +
+      '</section>' +
+      '<section class="login-panel"><div class="login-box">' +
+        '<div><h2>Sign in</h2><p class="muted" style="margin-top:6px">Use the user ID and temporary password your HR admin gave you.</p></div>' +
+        '<form id="login-form" class="stack" novalidate>' +
+          '<label class="field"><span>User ID</span><input class="input mono" id="login-id" autocomplete="username" placeholder="SW-ID-0002" required></label>' +
+          '<label class="field"><span>Password</span><div class="pw-wrap"><input class="input" id="login-pw" type="password" autocomplete="current-password" required><button type="button" class="btn ghost sm" data-action="toggle-pw">Show</button></div></label>' +
+          '<p class="error-text" id="login-error" hidden></p>' +
+          '<button class="btn primary" type="submit">Sign in</button>' +
+        '</form>' +
+        '<div class="note"><div><b>Email sign-in is not connected yet.</b> Your HR admin creates your user ID and a temporary password. You set your own password the first time you sign in.</div></div>' +
+        '<div class="stack" style="gap:10px"><span class="label">Demo accounts · click to fill</span><div class="demo-list">' +
+          demos.map(e => '<button type="button" class="demo" data-action="demo" data-id="' + e.id + '"><span><b>' + esc(e.name) + '</b><span class="faint mono">' + e.id + '</span></span><span class="tag">' + ROLE_LABEL[e.role] + ' · ' + e.country + '</span></button>').join('') +
+        '</div></div>' +
+      '</div></section>' +
+    '</div>';
+  }
+
+  function forceChangeView(u) {
+    return '<div class="login"><section class="login-hero"><div class="logo on-grad">' + LOGO_SVG + 'swing</div>' +
+      '<div><div class="eyebrow">Welcome, ' + esc(u.name.split(' ')[0]) + '</div><h1>Set your own password.</h1><p>You signed in with a temporary password from your HR admin. Choose a new one to continue. Your user ID stays <span class="mono">' + u.id + '</span>.</p></div><div></div></section>' +
+      '<section class="login-panel"><div class="login-box"><h2>New password</h2>' +
+      '<form id="force-form" class="stack" novalidate>' +
+        '<label class="field"><span>New password</span><input class="input" id="fc-new" type="password" autocomplete="new-password"><small>At least 8 characters.</small></label>' +
+        '<label class="field"><span>Confirm new password</span><input class="input" id="fc-confirm" type="password" autocomplete="new-password"></label>' +
+        '<p class="error-text" id="fc-error" hidden></p>' +
+        '<button class="btn primary" type="submit">Save and continue</button>' +
+        '<button class="btn ghost" type="button" data-action="logout">Sign out</button>' +
+      '</form></div></section></div>';
+  }
+
+  // ---------- shell ----------
+  function navFor(u) {
+    const teamPending = state.requests.filter(r => r.status === 'pending' && emp(r.empId).managerId === u.id).length;
+    const allPending = state.requests.filter(r => canApprove(u, r)).length;
+    const groups = [{ label: 'My leave', items: [['overview', 'Overview'], ['request', 'Request leave'], ['mine', 'My requests'], ['holidays', 'Public holidays']] }];
+    if (isLeader(u)) groups.push({ label: 'My team', items: [['t-approvals', 'Team approvals', teamPending], ['t-team', 'Team members'], ['t-calendar', 'Team calendar']] });
+    if (u.role === 'admin') groups.push({ label: 'People Ops', items: [['a-overview', 'Dashboard'], ['a-approvals', 'All approvals', allPending], ['a-employees', 'Employees & access'], ['a-org', 'Reporting line'], ['a-calendar', 'Leave calendar'], ['a-policy', 'Leave policy'], ['a-holidays', 'Public holidays']] });
+    groups.push({ label: 'Settings', items: [['account', 'Account']] });
+    return groups;
+  }
+
+  function shellView(u) {
+    const groups = navFor(u);
+    const keys = groups.flatMap(g => g.items.map(i => i[0]));
+    if (!ui.view || !keys.includes(ui.view)) ui.view = u.role === 'admin' ? 'a-overview' : isLeader(u) ? 't-approvals' : 'overview';
+    const v = VIEWS[ui.view](u);
+    return '<div class="shell">' +
+      '<aside class="side">' +
+        '<div class="side-brand"><div class="logo">' + LOGO_SVG + 'swing</div><small>HRIS · ' + ROLE_LABEL[u.role] + '</small></div>' +
+        '<nav class="nav" aria-label="Main">' + groups.map(g => '<div class="nav-group"><div class="nav-label">' + g.label + '</div>' + g.items.map(([k, label, count]) =>
+          '<button class="' + (ui.view === k ? 'on' : '') + '" data-nav="' + k + '"><span>' + label + '</span>' + (count ? '<span class="count num">' + count + '</span>' : '') + '</button>').join('') + '</div>').join('') + '</nav>' +
+        '<div class="side-foot">' +
+          '<div class="me"><span class="avatar">' + initials(u.name) + '</span><div><b>' + esc(u.name) + '</b><span class="faint mono" style="font-size:12px">' + u.id + '</span></div></div>' +
+          '<div class="btn-row"><button class="btn sm" data-action="logout">Sign out</button></div>' +
+        '</div>' +
+      '</aside>' +
+      '<main class="main">' +
+        '<header class="page-head"><div><div class="eyebrow">' + v.eyebrow + '</div><h1>' + v.title + '</h1>' + (v.sub ? '<p>' + v.sub + '</p>' : '') + '</div>' + (v.actions ? '<div class="row">' + v.actions + '</div>' : '') + '</header>' +
+        v.body +
+      '</main>' +
+    '</div>';
+  }
+
+  // ---------- employee views ----------
+  function balanceTile(u, t) {
+    const b = balance(u, t.code);
+    if (b.quota == null) {
+      return '<div class="card balance"><span class="label">' + t.name + '</span><div class="big num">' + b.used + '</div><div class="of">days taken this year</div><div class="meta"><span>No yearly quota</span>' + (b.pending ? '<span>' + b.pending + ' pending</span>' : '') + '</div></div>';
+    }
+    const usedPct = Math.min(100, b.used / b.quota * 100), pendPct = Math.min(100 - usedPct, b.pending / b.quota * 100);
+    return '<div class="card balance"><span class="label">' + t.name + '</span>' +
+      '<div class="big num grad-text">' + b.available + '</div>' +
+      '<div class="of">of ' + b.quota + ' days available</div>' +
+      '<div class="meter" title="' + b.used + ' used, ' + b.pending + ' pending"><i class="used" style="width:' + usedPct + '%"></i><i class="pend" style="width:' + pendPct + '%"></i></div>' +
+      '<div class="meta num"><span>' + b.used + ' used</span><span>' + b.pending + ' pending</span></div></div>';
+  }
+
+  function holidayList(country, from, limit) {
+    const list = holidaysOf(country).filter(h => h.date >= from).sort((a, b) => a.date.localeCompare(b.date)).slice(0, limit);
+    if (!list.length) return '<p class="empty">No more public holidays listed for this year.</p>';
+    return '<div class="list">' + list.map(h => '<div class="list-item"><div class="date-chip"><b class="num">' + fromISO(h.date).getDate() + '</b><small>' + fmt(h.date, { month: 'short' }) + '</small></div><div class="grow"><b>' + esc(h.name) + '</b><div class="faint">' + fmt(h.date, { weekday: 'long' }) + (isWeekend(h.date) ? ' · falls on a weekend' : '') + '</div></div></div>').join('') + '</div>';
+  }
+
+  const VIEWS = {};
+
+  VIEWS.overview = u => {
+    const t = todayISO();
+    const upcoming = state.requests.filter(r => r.empId === u.id && r.end >= t && (r.status === 'approved' || r.status === 'pending')).sort((a, b) => a.start.localeCompare(b.start));
+    const tiles = ['AL', 'SL', 'SP', 'UL'].map(c => balanceTile(u, leaveType(c))).join('');
+    const teamWaiting = state.requests.filter(r => r.status === 'pending' && emp(r.empId).managerId === u.id).length;
+    return {
+      eyebrow: 'Attendance · ' + new Date().getFullYear(),
+      title: 'Hi ' + esc(u.name.split(' ')[0]) + ', here is your time off',
+      sub: esc(u.title) + ' · Grade ' + u.grade + ' · ' + COUNTRIES[u.country] + (u.managerId && emp(u.managerId) ? ' · Reports to ' + esc(emp(u.managerId).name) : ''),
+      actions: '<button class="btn primary" data-nav="request">Request leave</button>',
+      body: (isLeader(u) && teamWaiting ? '<div class="card grad row" style="justify-content:space-between"><div><span class="label">My team</span><h3 style="margin-top:6px">' + teamWaiting + ' leave ' + (teamWaiting === 1 ? 'request is' : 'requests are') + ' waiting for you</h3></div><button class="btn" data-nav="t-approvals">Review now</button></div>' : '') +
+        '<section class="grid-4">' + tiles + '</section>' +
+        '<section class="grid-2">' +
+          '<div class="card"><div class="card-head"><h3>Your upcoming time off</h3><button class="btn ghost sm" data-nav="mine">All requests</button></div>' +
+            (upcoming.length ? '<div class="list">' + upcoming.map(r => '<div class="list-item"><div class="date-chip"><b class="num">' + fromISO(r.start).getDate() + '</b><small>' + fmt(r.start, { month: 'short' }) + '</small></div><div class="grow"><b>' + leaveType(r.type).name + '</b><div class="faint">' + fmtRange(r.start, r.end) + ' · ' + fmtDays(r.days) + '</div></div>' + statusPill(r.status) + '</div>').join('') + '</div>' : '<p class="empty">Nothing booked yet.</p>') +
+          '</div>' +
+          '<div class="card"><div class="card-head"><h3>Next public holidays</h3><span class="tag">' + COUNTRIES[u.country] + '</span></div>' + holidayList(u.country, t, 4) + '</div>' +
+        '</section>' +
+        '<div class="note"><div><b>Sick leave rule.</b> One day of sick leave needs no document. From two working days, attach a medical certificate (surat dokter / MC) to the request.</div></div>'
+    };
+  };
+
+  VIEWS.request = u => {
+    const d = ui.draft || (ui.draft = { type: 'AL', start: nextWorkday(addDays(todayISO(), 1)), end: nextWorkday(addDays(todayISO(), 1)), half: 'none', reason: '', attachment: '' });
+    const types = state.leaveTypes;
+    return {
+      eyebrow: 'Attendance · New request',
+      title: 'Request leave',
+      sub: 'Days count working days only. Weekends and ' + COUNTRIES[u.country] + ' public holidays are skipped automatically.',
+      body: '<div class="split">' +
+        '<form id="request-form" class="card stack" novalidate>' +
+          '<label class="field"><span>Leave type</span><select class="input" id="rq-type">' + types.map(t => {
+            const b = balance(u, t.code);
+            return '<option value="' + t.code + '"' + (d.type === t.code ? ' selected' : '') + '>' + t.name + (b.available == null ? ' · unpaid' : ' · ' + b.available + ' days available') + '</option>';
+          }).join('') + '</select><small id="rq-type-hint"></small></label>' +
+          '<div class="form-grid">' +
+            '<label class="field"><span>First day</span><input class="input" type="date" id="rq-start" value="' + d.start + '"></label>' +
+            '<label class="field"><span>Last day</span><input class="input" type="date" id="rq-end" value="' + d.end + '"></label>' +
+          '</div>' +
+          '<div class="field" id="rq-half-wrap"><span>Duration</span><div class="seg" id="rq-half">' +
+            [['none', 'Full day'], ['am', 'Morning only'], ['pm', 'Afternoon only']].map(([k, l]) => '<button type="button" data-half="' + k + '" class="' + (d.half === k ? 'on' : '') + '">' + l + '</button>').join('') +
+          '</div><small>Half days are available for single-day requests.</small></div>' +
+          '<label class="field"><span>Reason</span><textarea class="input" id="rq-reason" placeholder="A short note for your approver">' + esc(d.reason) + '</textarea></label>' +
+          '<label class="field"><span id="rq-doc-label">Supporting document</span><input class="input" type="file" id="rq-doc" accept=".pdf,.jpg,.jpeg,.png"><small id="rq-doc-hint">PDF, JPG or PNG.' + (d.attachment ? ' Attached: ' + esc(d.attachment) : '') + '</small></label>' +
+          '<p class="error-text" id="rq-error" hidden></p>' +
+          '<div class="row"><button class="btn primary" type="submit">Submit request</button><button class="btn ghost" type="button" data-action="reset-draft">Clear</button></div>' +
+        '</form>' +
+        '<aside class="card grad summary" id="rq-summary"></aside>' +
+      '</div>'
+    };
+  };
+
+  function summaryHTML(u) {
+    const d = ui.draft, t = leaveType(d.type);
+    const c = countDays(d.start, d.end, u.country, d.half);
+    const b = balance(u, d.type);
+    const after = b.available == null ? null : b.available - c.days;
+    return '<span class="label">Request summary</span>' +
+      '<div class="days num">' + (c.days % 1 ? c.days.toFixed(1) : c.days) + '</div><div class="muted">working ' + (c.days === 1 ? 'day' : 'days') + ' of ' + t.name.toLowerCase() + '</div>' +
+      '<dl class="num">' +
+        '<dt>Dates</dt><dd>' + (d.start && d.end && d.end >= d.start ? fmtRange(d.start, d.end) : '-') + '</dd>' +
+        '<dt>Paid</dt><dd>' + (t.paid ? 'Yes' : 'No, unpaid') + '</dd>' +
+        (b.available == null ? '' : '<dt>Available now</dt><dd>' + b.available + ' days</dd><dt>After this request</dt><dd>' + after + ' days</dd>') +
+        '<dt>Approver</dt><dd>' + approverLabel(u) + '</dd>' +
+      '</dl>' +
+      (c.skipped.length ? '<div class="skipped"><span class="label">Public holidays skipped</span>' + c.skipped.map(s => '<span><b>' + fmtShort(s.date) + '</b>' + esc(s.name) + '</span>').join('') + '</div>' : '');
+  }
+
+  function validateDraft(u) {
+    const d = ui.draft, t = leaveType(d.type);
+    if (!d.start || !d.end) return 'Pick a first and last day.';
+    if (d.end < d.start) return 'The last day is before the first day. Swap the dates.';
+    const c = countDays(d.start, d.end, u.country, d.half);
+    if (c.days === 0) return 'Those dates are all weekends or public holidays, so there is nothing to request.';
+    const b = balance(u, d.type);
+    if (b.available != null && c.days > b.available) return 'You have ' + b.available + ' days of ' + t.name.toLowerCase() + ' left and this request needs ' + c.days + '. Shorten it, or use unpaid leave for the rest.';
+    if (docRequired(t, c.days) && !d.attachment) return t.code === 'SL' ? 'Sick leave of two days or more needs a medical certificate (surat dokter / MC). Attach it to continue.' : t.name + ' needs a supporting document. Attach it to continue.';
+    const clash = state.requests.find(r => r.empId === u.id && (r.status === 'pending' || r.status === 'approved') && r.start <= d.end && r.end >= d.start);
+    if (clash) return 'These dates overlap your ' + clash.status + ' request ' + clash.id + ' (' + fmtRange(clash.start, clash.end) + '). Cancel it first or pick other dates.';
+    return null;
+  }
+
+  VIEWS.mine = u => {
+    const all = state.requests.filter(r => r.empId === u.id).sort((a, b) => b.start.localeCompare(a.start));
+    const rows = ui.reqFilter === 'all' ? all : all.filter(r => r.status === ui.reqFilter);
+    const filters = ['all', 'pending', 'approved', 'rejected', 'cancelled'];
+    return {
+      eyebrow: 'Attendance · History',
+      title: 'My requests',
+      actions: '<button class="btn primary" data-nav="request">Request leave</button>',
+      body: '<div class="card"><div class="card-head"><div class="seg">' + filters.map(f => '<button data-filter="' + f + '" class="' + (ui.reqFilter === f ? 'on' : '') + '">' + f[0].toUpperCase() + f.slice(1) + (f === 'all' ? '' : ' (' + all.filter(r => r.status === f).length + ')') + '</button>').join('') + '</div></div>' +
+        (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Ref</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Decided by</th><th>Approver note</th><th></th></tr></thead><tbody>' +
+          rows.map(r => '<tr><td class="mono">' + r.id + '</td><td>' + leaveType(r.type).name + (r.attachment ? '<div class="faint" style="font-size:12.5px">' + esc(r.attachment) + '</div>' : '') + '</td><td class="num">' + fmtRange(r.start, r.end) + (r.half !== 'none' ? '<div class="faint">' + (r.half === 'am' ? 'Morning' : 'Afternoon') + '</div>' : '') + '</td><td class="num">' + r.days + '</td><td>' + statusPill(r.status) + '</td><td>' + (r.status === 'pending' ? '<span class="faint">' + approverLabel(u) + '</span>' : r.status === 'cancelled' ? '<span class="faint">You</span>' : decidedByName(r)) + '</td><td class="muted">' + (esc(r.note) || '<span class="faint">-</span>') + '</td><td class="actions">' +
+            (r.status === 'pending' || (r.status === 'approved' && r.start > todayISO())
+              ? (ui.confirmCancel === r.id ? '<span class="row" style="justify-content:flex-end;gap:6px"><span class="muted" style="font-size:13px">Cancel this request?</span><button class="btn danger sm" data-action="cancel-yes" data-id="' + r.id + '">Yes, cancel</button><button class="btn sm" data-action="cancel-no">Keep</button></span>' : '<button class="btn ghost sm" data-action="cancel-ask" data-id="' + r.id + '">Cancel</button>')
+              : '') + '</td></tr>').join('') +
+        '</tbody></table></div>' : '<p class="empty">No ' + (ui.reqFilter === 'all' ? '' : ui.reqFilter + ' ') + 'requests.</p>') +
+      '</div>'
+    };
+  };
+
+  function holidayYearView(country, editable) {
+    const t = todayISO();
+    const list = holidaysOf(country).slice().sort((a, b) => a.date.localeCompare(b.date));
+    const months = {};
+    list.forEach(h => { const k = h.date.slice(0, 7); (months[k] = months[k] || []).push(h); });
+    const keys = Object.keys(months);
+    if (!keys.length) return '<p class="empty">No public holidays added yet.</p>';
+    return '<div class="grid-2">' + keys.map(k => '<div class="card"><div class="card-head"><h3>' + fmt(k + '-01', { month: 'long', year: 'numeric' }) + '</h3><span class="faint num">' + months[k].length + '</span></div><div class="list">' +
+      months[k].map(h => '<div class="list-item" style="' + (h.date < t ? 'opacity:.55' : '') + '"><div class="date-chip"><b class="num">' + fromISO(h.date).getDate() + '</b><small>' + fmt(h.date, { weekday: 'short' }) + '</small></div><div class="grow"><b>' + esc(h.name) + '</b>' + (h.date < t ? '<div class="faint">Passed</div>' : isWeekend(h.date) ? '<div class="faint">Weekend</div>' : '') + '</div>' +
+        (editable ? '<button class="btn ghost sm" data-action="hol-remove" data-date="' + h.date + '" data-name="' + esc(h.name) + '">Remove</button>' : '') + '</div>').join('') +
+    '</div></div>').join('') + '</div>';
+  }
+
+  VIEWS.holidays = u => ({
+    eyebrow: 'Calendar · ' + COUNTRIES[u.country],
+    title: 'Public holidays ' + new Date().getFullYear(),
+    sub: 'Paid days off for everyone in ' + COUNTRIES[u.country] + '. They do not count against your leave balance.',
+    body: holidayYearView(u.country, false)
+  });
+
+  VIEWS.account = u => ({
+    eyebrow: 'Account',
+    title: 'Your account',
+    body: '<div class="grid-2">' +
+      '<div class="card"><div class="row" style="margin-bottom:16px"><span class="avatar lg">' + initials(u.name) + '</span><div><h3>' + esc(u.name) + '</h3><span class="muted">' + esc(u.title) + '</span></div></div>' +
+        '<div class="table-wrap"><table><tbody>' +
+          [['User ID', '<span class="mono">' + u.id + '</span>'], ['Access', ROLE_LABEL[u.role]], ['Reports to', u.managerId && emp(u.managerId) ? esc(emp(u.managerId).name) : '<span class="faint">No one</span>'], ['Country', COUNTRIES[u.country]], ['Department', esc(u.department)], ['Grade', u.grade], ['Joined', fmt(u.joinDate)], ['Work email', u.email ? esc(u.email) + ' <span class="faint">(sign-in not connected)</span>' : '<span class="faint">Not set</span>']]
+          .map(([k, v]) => '<tr><td class="muted" style="width:40%">' + k + '</td><td>' + v + '</td></tr>').join('') +
+        '</tbody></table></div></div>' +
+      '<form id="pw-form" class="card stack" novalidate><h3>Change password</h3>' +
+        '<label class="field"><span>Current password</span><input class="input" type="password" id="pw-cur" autocomplete="current-password"></label>' +
+        '<label class="field"><span>New password</span><input class="input" type="password" id="pw-new" autocomplete="new-password"><small>At least 8 characters.</small></label>' +
+        '<label class="field"><span>Confirm new password</span><input class="input" type="password" id="pw-confirm" autocomplete="new-password"></label>' +
+        '<p class="error-text" id="pw-error" hidden></p>' +
+        '<div><button class="btn primary" type="submit">Update password</button></div>' +
+      '</form>' +
+    '</div>' +
+    '<div class="note"><div><b>Prototype data.</b> Everything here is stored in this browser only. <button class="btn ghost sm" data-action="reset-demo">Reset demo data</button></div></div>'
+  });
+
+  // ---------- admin views ----------
+  function whoOff(iso, ids) {
+    return state.requests.filter(r => r.status === 'approved' && isOn(r, iso) && (!ids || ids.includes(r.empId))).map(r => ({ r, e: emp(r.empId) }));
+  }
+
+  function approvalCard(r, compact, u) {
+    const e = emp(r.empId), t = leaveType(r.type), b = balance(e, r.type);
+    const m = e.managerId && emp(e.managerId);
+    const missingDoc = docRequired(t, r.days) && !r.attachment;
+    const overriding = u.role === 'admin' && m && m.id !== u.id;
+    return '<div class="card approval">' +
+      '<div><div class="who"><span class="avatar">' + initials(e.name) + '</span><div><b style="font-family:var(--font-display)">' + esc(e.name) + '</b><div class="faint" style="font-size:13px"><span class="mono">' + e.id + '</span> · ' + esc(e.title) + ' · ' + e.country + '</div></div></div>' +
+        '<div class="facts num">' +
+          '<div><small>Type</small><span>' + t.name + (t.paid ? '' : ' (unpaid)') + '</span></div>' +
+          '<div><small>Dates</small><span>' + fmtRange(r.start, r.end) + (r.half !== 'none' ? ' · ' + (r.half === 'am' ? 'AM' : 'PM') : '') + '</span></div>' +
+          '<div><small>Working days</small><span>' + r.days + '</span></div>' +
+          (b.quota == null ? '' : '<div><small>Balance after approval</small><span>' + (b.quota - b.used - r.days) + ' of ' + b.quota + '</span></div>') +
+          '<div><small>Leader</small><span>' + (m ? esc(m.name) : 'None, People Ops approves') + '</span></div>' +
+          '<div><small>Submitted</small><span>' + fmt(r.createdAt) + '</span></div>' +
+        '</div>' +
+        (compact ? '' : (r.reason ? '<blockquote>' + esc(r.reason) + '</blockquote>' : '') +
+        '<div class="row" style="margin-top:12px">' + (r.attachment ? '<span class="tag">' + esc(r.attachment) + '</span>' : '') + (missingDoc ? '<span class="pill rejected">Medical certificate missing</span>' : '') + (overriding ? '<span class="faint" style="font-size:13px">You are approving on behalf of ' + esc(m.name.split(' ')[0]) + '.</span>' : '') + '</div>') +
+      '</div>' +
+      (canApprove(u, r) ? '<div class="btns"><button class="btn ok sm" data-action="approve" data-id="' + r.id + '">Approve</button><button class="btn danger sm" data-action="reject" data-id="' + r.id + '">Reject</button></div>' : '<div></div>') +
+    '</div>';
+  }
+
+  const decidedByName = r => r.decidedBy && emp(r.decidedBy) ? esc(emp(r.decidedBy).name) : '-';
+
+  function approvalsBody(u, scopeIds) {
+    const inScope = r => r.empId !== u.id && (!scopeIds || scopeIds.includes(r.empId));
+    const pending = state.requests.filter(r => r.status === 'pending' && inScope(r)).sort((a, b) => a.start.localeCompare(b.start));
+    const decided = state.requests.filter(r => r.status !== 'pending' && inScope(r)).sort((a, b) => (b.decidedAt || b.createdAt).localeCompare(a.decidedAt || a.createdAt));
+    return '<div class="seg">' +
+        '<button data-tab="pending" class="' + (ui.approvalsTab === 'pending' ? 'on' : '') + '">Pending (' + pending.length + ')</button>' +
+        '<button data-tab="decided" class="' + (ui.approvalsTab === 'decided' ? 'on' : '') + '">Decided (' + decided.length + ')</button>' +
+      '</div>' +
+      (ui.approvalsTab === 'pending'
+        ? (pending.length ? '<div class="stack">' + pending.map(r => approvalCard(r, false, u)).join('') + '</div>' : '<div class="card"><p class="empty">All caught up. No requests waiting.</p></div>')
+        : '<div class="card"><div class="table-wrap"><table><thead><tr><th>Ref</th><th>Employee</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Decided by</th><th>Note</th></tr></thead><tbody>' +
+            (decided.length ? decided.map(r => { const e = emp(r.empId); return '<tr><td class="mono">' + r.id + '</td><td><b>' + esc(e.name) + '</b><div class="faint mono" style="font-size:12px">' + e.id + '</div></td><td>' + leaveType(r.type).name + '</td><td class="num">' + fmtRange(r.start, r.end) + '</td><td class="num">' + r.days + '</td><td>' + statusPill(r.status) + '</td><td>' + (r.status === 'cancelled' ? '<span class="faint">Employee</span>' : decidedByName(r)) + '</td><td class="muted">' + (esc(r.note) || '<span class="faint">-</span>') + '</td></tr>'; }).join('') : '<tr><td colspan="8" class="empty">Nothing decided yet.</td></tr>') +
+          '</tbody></table></div></div>');
+  }
+
+  function calendarBody(scopeIds) {
+    const t = todayISO();
+    if (!ui.calMonth) ui.calMonth = t.slice(0, 7);
+    const first = fromISO(ui.calMonth + '-01');
+    const gridStart = addDays(ui.calMonth + '-01', -((first.getDay() + 6) % 7));
+    const countries = ui.calCountry === 'all' ? ['ID', 'MY'] : [ui.calCountry];
+    const reqs = state.requests.filter(r => (r.status === 'approved' || r.status === 'pending') && countries.includes(emp(r.empId).country) && (!scopeIds || scopeIds.includes(r.empId)));
+    let cells = '';
+    for (let i = 0; i < 42; i++) {
+      const d = addDays(gridStart, i);
+      const out = d.slice(0, 7) !== ui.calMonth;
+      const hols = countries.map(c => { const h = holidayOn(d, c); return h ? (countries.length > 1 ? c + ' · ' : '') + h.name : null; }).filter(Boolean);
+      const people = reqs.filter(r => isOn(r, d));
+      cells += '<div class="day' + (out ? ' out' : '') + (isWeekend(d) ? ' weekend' : '') + (d === t ? ' today' : '') + '"><span class="d num">' + fromISO(d).getDate() + '</span>' +
+        hols.map(h => '<span class="hol">' + esc(h) + '</span>').join('') +
+        people.map(r => { const e = emp(r.empId); return '<span class="who' + (r.status === 'pending' ? ' pend' : '') + '" title="' + esc(e.name) + ' · ' + leaveType(r.type).name + ' (' + r.status + ')">' + esc(e.name.split(' ')[0]) + ' · ' + r.type + '</span>'; }).join('') +
+      '</div>';
+    }
+    return '<div class="row" style="justify-content:space-between"><div class="seg">' + [['all', 'All countries'], ['ID', 'Indonesia'], ['MY', 'Malaysia']].map(([k, l]) => '<button data-cal-country="' + k + '" class="' + (ui.calCountry === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
+      '<div class="legend"><span><i></i>Approved</span><span><i class="pend"></i>Pending</span><span><i class="hol"></i>Public holiday</span></div></div>' +
+      '<div class="cal-wrap"><div class="cal">' + ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(x => '<div class="dow">' + x + '</div>').join('') + cells + '</div></div>';
+  }
+  const CAL_ACTIONS = '<button class="btn sm" data-action="cal-prev" aria-label="Previous month">Previous</button><button class="btn sm" data-action="cal-today">This month</button><button class="btn sm" data-action="cal-next" aria-label="Next month">Next</button>';
+  const calTitle = () => fmt((ui.calMonth || todayISO().slice(0, 7)) + '-01', { month: 'long', year: 'numeric' });
+
+  // ---------- leader views ----------
+  VIEWS['t-approvals'] = u => ({
+    eyebrow: 'My team · Approvals',
+    title: 'Team approvals',
+    sub: 'Leave requests from people who report directly to you. Approving deducts the working days from their balance. Rejecting needs a short reason they will see.',
+    body: approvalsBody(u, directReports(u.id).map(e => e.id))
+  });
+
+  VIEWS['t-team'] = u => {
+    const t = todayISO();
+    const team = directReports(u.id);
+    const offIds = whoOff(t, team.map(e => e.id)).map(x => x.e.id);
+    return {
+      eyebrow: 'My team · ' + team.length + ' direct ' + (team.length === 1 ? 'report' : 'reports'),
+      title: 'Team members',
+      sub: 'Your reporting line is set by People Ops. Ask them if someone is missing or should move to another leader.',
+      body: '<div class="card"><div class="table-wrap"><table><thead><tr><th>Member</th><th>Grade</th><th>Today</th><th>Annual left</th><th>Sick used</th><th>Next time off</th><th>Pending</th></tr></thead><tbody>' +
+        (team.length ? team.map(e => {
+          const al = balance(e, 'AL'), sl = balance(e, 'SL');
+          const next = state.requests.filter(r => r.empId === e.id && r.status === 'approved' && r.end >= t).sort((a, b) => a.start.localeCompare(b.start))[0];
+          const pend = state.requests.filter(r => r.empId === e.id && r.status === 'pending').length;
+          return '<tr><td><div class="row" style="flex-wrap:nowrap"><span class="avatar">' + initials(e.name) + '</span><div><b>' + esc(e.name) + '</b><div class="faint" style="font-size:13px">' + esc(e.title) + ' · ' + e.country + (e.role === 'leader' ? ' · Leader of ' + directReports(e.id).length : '') + '</div></div></div></td>' +
+            '<td class="num">' + e.grade + '</td>' +
+            '<td>' + (!e.active ? '<span class="pill inactive">Deactivated</span>' : offIds.includes(e.id) ? '<span class="pill pending">Off</span>' : '<span class="pill active">In</span>') + '</td>' +
+            '<td class="num">' + al.available + ' / ' + al.quota + '</td><td class="num">' + sl.used + '</td>' +
+            '<td class="num">' + (next ? leaveType(next.type).name + '<div class="faint">' + fmtRange(next.start, next.end) + '</div>' : '<span class="faint">-</span>') + '</td>' +
+            '<td>' + (pend ? '<button class="btn ghost sm" data-nav="t-approvals">' + pend + ' to review</button>' : '<span class="faint">-</span>') + '</td></tr>';
+        }).join('') : '<tr><td colspan="7" class="empty">No one reports to you yet.</td></tr>') +
+      '</tbody></table></div></div>'
+    };
+  };
+
+  VIEWS['t-calendar'] = u => ({
+    eyebrow: 'My team · Calendar',
+    title: calTitle(),
+    sub: 'You and your direct reports. Leave codes: AL annual, SL sick, SP special, MT maternity, UL unpaid.',
+    actions: CAL_ACTIONS,
+    body: calendarBody([u.id].concat(directReports(u.id).map(e => e.id)))
+  });
+
+  // ---------- admin views ----------
+  VIEWS['a-overview'] = u => {
+    const t = todayISO();
+    const pending = state.requests.filter(r => r.status === 'pending' && r.empId !== u.id).sort((a, b) => a.start.localeCompare(b.start));
+    const noLeader = pending.filter(r => !emp(r.empId).managerId);
+    const off = whoOff(t);
+    const week = new Set(state.requests.filter(r => r.status === 'approved' && r.start <= addDays(t, 7) && r.end > t).map(r => r.empId));
+    const active = state.employees.filter(e => e.active).length;
+    const leaders = state.employees.filter(e => e.active && e.role === 'leader').length;
+    const stat = (label, value, sub) => '<div class="card stat"><span class="label">' + label + '</span><div class="big num grad-text">' + value + '</div><div class="muted" style="font-size:13.5px;margin-top:6px">' + sub + '</div></div>';
+    return {
+      eyebrow: 'People Ops · ' + fmt(t, { weekday: 'long', day: 'numeric', month: 'long' }),
+      title: 'Attendance dashboard',
+      actions: '<button class="btn" data-action="add-emp">Create account</button><button class="btn primary" data-nav="a-approvals">All approvals</button>',
+      body: '<section class="grid-4">' +
+          stat('Waiting for approval', pending.length, noLeader.length + ' with no leader, People Ops only') +
+          stat('Off today', off.length, 'approved leave only') +
+          stat('Off in the next 7 days', week.size, 'people with approved leave') +
+          stat('Active accounts', active, leaders + ' leaders · ' + state.employees.filter(e => !e.active).length + ' deactivated') +
+        '</section>' +
+        '<section class="split">' +
+          '<div class="stack"><div class="card-head" style="margin:0"><h3 style="font-size:20px">Waiting across the company</h3><button class="btn ghost sm" data-nav="a-approvals">See all</button></div>' +
+            (pending.length ? pending.slice(0, 3).map(r => approvalCard(r, true, u)).join('') : '<div class="card"><p class="empty">All caught up. No requests waiting.</p></div>') +
+          '</div>' +
+          '<div class="stack">' +
+            '<div class="card"><div class="card-head"><h3>Off today</h3><span class="faint">' + fmtShort(t) + '</span></div>' +
+              (off.length ? '<div class="list">' + off.map(({ r, e }) => '<div class="list-item"><span class="avatar">' + initials(e.name) + '</span><div class="grow"><b>' + esc(e.name) + '</b><div class="faint">' + leaveType(r.type).name + ' · back ' + fmtShort(nextWorkday(addDays(r.end, 1))) + '</div></div><span class="tag">' + e.country + '</span></div>').join('') + '</div>' : '<p class="empty">Everyone is in today.</p>') +
+            '</div>' +
+            '<div class="card hl"><span class="label">Next public holiday</span>' +
+              ['ID', 'MY'].map(c => { const h = holidaysOf(c).filter(x => x.date >= t).sort((a, b) => a.date.localeCompare(b.date))[0]; return '<div style="margin-top:10px"><b style="font-family:var(--font-display)">' + COUNTRIES[c] + '</b><div class="muted">' + (h ? esc(h.name) + ' · ' + fmtShort(h.date) : 'None left this year') + '</div></div>'; }).join('') +
+            '</div>' +
+          '</div>' +
+        '</section>'
+    };
+  };
+
+  VIEWS['a-approvals'] = u => ({
+    eyebrow: 'People Ops · Approvals',
+    title: 'All approvals',
+    sub: 'Every pending request in the company. Leaders normally approve their own reportees. As HR admin you can approve or reject any request except your own.',
+    body: approvalsBody(u, null)
+  });
+
+  VIEWS['a-employees'] = u => {
+    const q = ui.empQuery.trim().toLowerCase();
+    const list = state.employees.filter(e => !q || (e.name + ' ' + e.id + ' ' + e.department + ' ' + e.email + ' ' + e.role).toLowerCase().includes(q));
+    return {
+      eyebrow: 'People Ops · Access',
+      title: 'Employees & access',
+      sub: 'Create sign-in accounts and set each person\'s access level and leader. Each new account gets a user ID and a one-time temporary password.',
+      actions: '<button class="btn primary" data-action="add-emp">Create account</button>',
+      body: '<div class="note"><div><b>Email sign-in is not connected yet.</b> Share the user ID and temporary password with the employee directly, for example over Slack or in person. They set their own password the first time they sign in.</div></div>' +
+        '<div class="card"><div class="card-head"><label class="field" style="width:min(340px,100%)"><span class="faint" style="font-weight:500">Search</span><input class="input" id="emp-q" placeholder="Name, user ID, department or access" value="' + esc(ui.empQuery) + '"></label><span class="faint num">' + list.length + ' of ' + state.employees.length + '</span></div>' +
+        '<div class="table-wrap"><table><thead><tr><th>Employee</th><th>User ID</th><th>Access</th><th>Reports to</th><th>Grade</th><th>Annual left</th><th>Status</th><th></th></tr></thead><tbody>' +
+          list.map(e => { const al = balance(e, 'AL'), m = e.managerId && emp(e.managerId); return '<tr>' +
+            '<td><div class="row" style="flex-wrap:nowrap"><span class="avatar">' + initials(e.name) + '</span><div><b>' + esc(e.name) + '</b><div class="faint" style="font-size:13px">' + esc(e.title) + ' · ' + esc(e.department) + ' · ' + e.country + '</div></div></div></td>' +
+            '<td class="mono">' + e.id + (e.mustChange ? '<div class="faint" style="font-size:11.5px;font-family:var(--font-body)">Temporary password</div>' : '') + '</td>' +
+            '<td>' + (e.role === 'reportee' ? 'Reportee' : '<span class="tag">' + ROLE_LABEL[e.role] + '</span>') + (directReports(e.id).length ? '<div class="faint" style="font-size:12.5px">' + directReports(e.id).length + ' direct reports</div>' : '') + '</td>' +
+            '<td>' + (m ? esc(m.name) : '<span class="faint">No one</span>') + '</td>' +
+            '<td class="num">' + e.grade + '</td>' +
+            '<td class="num">' + al.available + ' / ' + al.quota + '</td>' +
+            '<td>' + (e.active ? '<span class="pill active">Active</span>' : '<span class="pill inactive">Deactivated</span>') + '</td>' +
+            '<td class="actions"><button class="btn ghost sm" data-action="edit-emp" data-id="' + e.id + '">Edit</button><button class="btn ghost sm" data-action="reset-pw" data-id="' + e.id + '">Reset password</button>' +
+              (e.id === u.id ? '' : '<button class="btn ghost sm" data-action="toggle-active" data-id="' + e.id + '">' + (e.active ? 'Deactivate' : 'Reactivate') + '</button>') + '</td>' +
+          '</tr>'; }).join('') +
+        '</tbody></table></div></div>'
+    };
+  };
+
+  function orgNode(e) {
+    const kids = directReports(e.id);
+    return '<div class="org-item"><div class="org-node' + (kids.length ? ' leader' : '') + '" style="' + (e.active ? '' : 'opacity:.55') + '">' +
+      '<span class="avatar">' + initials(e.name) + '</span>' +
+      '<div class="grow"><b>' + esc(e.name) + '</b> ' + (e.role === 'reportee' ? '' : '<span class="tag">' + ROLE_LABEL[e.role] + '</span>') +
+        '<div class="faint" style="font-size:13px">' + esc(e.title) + ' · ' + e.grade + ' · ' + e.country + (kids.length ? ' · approves for ' + kids.length : '') + (e.active ? '' : ' · deactivated') + '</div></div>' +
+      '<label class="row" style="gap:8px;flex-wrap:nowrap"><span class="faint" style="font-size:13px">Reports to</span><select class="input" data-org="' + e.id + '" id="org-' + e.id + '" aria-label="Leader of ' + esc(e.name) + '">' + leaderOptions(e.id, e.managerId) + '</select></label>' +
+    '</div>' + (kids.length ? '<div class="org-children">' + kids.map(orgNode).join('') + '</div>' : '') + '</div>';
+  }
+
+  VIEWS['a-org'] = () => {
+    const roots = state.employees.filter(e => !e.managerId || !emp(e.managerId));
+    return {
+      eyebrow: 'People Ops · Reporting line',
+      title: 'Reporting line',
+      sub: 'Who reports to whom. A person\'s leader approves their leave, and People Ops can always approve too. Only leaders and HR admins can have reportees.',
+      body: '<div class="legend"><span><span class="tag">Leader</span>Approves leave for direct reports</span><span><span class="tag">HR admin</span>Approves anyone, manages accounts</span><span>Reportee: requests leave only</span></div>' +
+        '<div class="org">' + roots.map(orgNode).join('') + '</div>'
+    };
+  };
+
+  VIEWS['a-calendar'] = () => ({
+    eyebrow: 'People Ops · Calendar',
+    title: calTitle(),
+    sub: 'Who is off across the company, by day. Leave codes: AL annual, SL sick, SP special, MT maternity, UL unpaid.',
+    actions: CAL_ACTIONS,
+    body: calendarBody(null)
+  });
+
+  VIEWS['a-policy'] = () => ({
+    eyebrow: 'People Ops · Policy',
+    title: 'Leave policy',
+    sub: 'Yearly quotas per country, in working days. Balances reset on 1 January.',
+    body: '<form id="policy-form" class="card stack" novalidate><div class="table-wrap"><table><thead><tr><th>Leave type</th><th>Paid</th><th>Indonesia</th><th>Malaysia</th><th>Document</th></tr></thead><tbody>' +
+      state.leaveTypes.map(t => '<tr><td><b>' + t.name + '</b> <span class="faint mono">' + t.code + '</span>' + (t.hint ? '<div class="faint" style="font-size:13px">' + t.hint + '</div>' : '') + '</td><td>' + (t.paid ? 'Paid' : 'Unpaid') + '</td>' +
+        (t.quota ? ['ID', 'MY'].map(c => '<td><input class="input num" style="width:90px" type="number" min="0" max="365" id="q-' + t.code + '-' + c + '" value="' + t.quota[c] + '"></td>').join('') : '<td class="faint">No quota</td><td class="faint">No quota</td>') +
+        '<td>' + ({ none: '<span class="faint">Not needed</span>', over1: 'From day 2 (MC)', always: 'Always' })[t.docRule] + '</td></tr>').join('') +
+      '</tbody></table></div><div class="row"><button class="btn primary" type="submit">Save quotas</button><span class="faint" style="font-size:13px">Changes apply to everyone in that country straight away.</span></div></form>'
+  });
+
+  VIEWS['a-holidays'] = () => ({
+    eyebrow: 'People Ops · Calendar',
+    title: 'Public holidays',
+    sub: 'Holidays here are skipped when counting leave days for employees in that country.',
+    body: '<div class="seg">' + Object.keys(COUNTRIES).map(c => '<button data-hol-country="' + c + '" class="' + (ui.holCountry === c ? 'on' : '') + '">' + COUNTRIES[c] + ' (' + holidaysOf(c).length + ')</button>').join('') + '</div>' +
+      '<form id="hol-form" class="card" novalidate><div class="form-grid hol-grid">' +
+        '<label class="field"><span>Date</span><input class="input" type="date" id="hol-date"></label>' +
+        '<label class="field"><span>Holiday name</span><input class="input" id="hol-name" placeholder="e.g. Cuti bersama Idul Fitri"></label>' +
+        '<button class="btn primary" type="submit">Add to ' + COUNTRIES[ui.holCountry] + '</button>' +
+      '</div><p class="error-text" id="hol-error" hidden style="margin-top:10px"></p></form>' +
+      '<div class="note warn"><div><b>Sample dates.</b> Check the 2026 list against the official SKB (Indonesia) and the federal gazette (Malaysia) before go-live. State holidays in Malaysia are not included.</div></div>' +
+      holidayYearView(ui.holCountry, true)
+  });
+
+  // ---------- modals ----------
+  function modalView(m) {
+    if (m.kind === 'add-emp' || m.kind === 'edit-emp') {
+      const editing = m.kind === 'edit-emp';
+      const e = editing ? emp(m.id) : { name: '', email: '', country: 'ID', department: 'Operations', title: '', grade: '1.1', joinDate: todayISO(), role: 'reportee', managerId: '' };
+      const sel = (v, cur) => v === cur ? ' selected' : '';
+      return '<div><div class="eyebrow">' + (editing ? 'Edit · ' + e.id : 'New account') + '</div><h2 style="margin-top:8px">' + (editing ? esc(e.name) : 'Create an attendance account') + '</h2><p class="muted" style="margin-top:6px">' + (editing ? 'Change job details, access level and leader. The user ID stays the same.' : 'We generate the user ID and a temporary password. Email sign-in comes later.') + '</p></div>' +
+        '<form id="emp-form" class="stack" novalidate data-edit="' + (editing ? e.id : '') + '"><div class="form-grid">' +
+          '<label class="field full"><span>Full name</span><input class="input" id="ne-name" placeholder="e.g. Putri Anggraini" value="' + esc(e.name) + '"></label>' +
+          '<label class="field full"><span>Work email <span class="faint" style="font-weight:400">(optional)</span></span><input class="input" type="email" id="ne-email" placeholder="name@getswing.app" value="' + esc(e.email) + '"><small>Saved on the profile for later. Not used for sign-in yet.</small></label>' +
+          '<label class="field"><span>Country</span><select class="input" id="ne-country"' + (editing ? ' disabled' : '') + '>' + Object.keys(COUNTRIES).map(c => '<option value="' + c + '"' + sel(c, e.country) + '>' + COUNTRIES[c] + '</option>').join('') + '</select>' + (editing ? '<small>Country is part of the user ID and cannot change.</small>' : '') + '</label>' +
+          '<label class="field"><span>Department</span><select class="input" id="ne-dept">' + DEPARTMENTS.map(d => '<option' + sel(d, e.department) + '>' + d + '</option>').join('') + '</select></label>' +
+          '<label class="field"><span>Job title</span><input class="input" id="ne-title" placeholder="e.g. Operations Associate" value="' + esc(e.title) + '"></label>' +
+          '<label class="field"><span>Grade</span><select class="input" id="ne-grade">' + GRADES.map(g => '<option' + sel(g, e.grade) + '>' + g + '</option>').join('') + '</select></label>' +
+          (editing ? '' : '<label class="field"><span>Join date</span><input class="input" type="date" id="ne-join" value="' + e.joinDate + '"></label>') +
+          '<label class="field"><span>Access</span><select class="input" id="ne-role">' + ['reportee', 'leader', 'admin'].map(r => '<option value="' + r + '"' + sel(r, e.role) + '>' + ROLE_LABEL[r] + '</option>').join('') + '</select><small>Leaders approve leave for their direct reports. HR admins approve anyone and manage accounts.</small></label>' +
+          '<label class="field full"><span>Reports to</span><select class="input" id="ne-manager">' + leaderOptions(editing ? e.id : null, e.managerId) + '</select><small>This person approves their leave. People Ops can always approve too.</small></label>' +
+        '</div><p class="faint" id="ne-preview" style="font-size:13.5px"></p><p class="error-text" id="ne-error" hidden></p>' +
+        '<div class="modal-actions"><button class="btn" type="button" data-action="close-modal">Cancel</button><button class="btn primary" type="submit">' + (editing ? 'Save changes' : 'Create account') + '</button></div></form>';
+    }
+    if (m.kind === 'creds') {
+      const e = emp(m.id);
+      const text = 'Swing HRIS - Attendance\nUser ID: ' + e.id + '\nTemporary password: ' + m.password + '\nYou will set your own password on first sign-in.';
+      return '<div><div class="eyebrow">' + (m.reset ? 'Password reset' : 'Account created') + '</div><h2 style="margin-top:8px">Share these with ' + esc(e.name.split(' ')[0]) + '</h2><p class="muted" style="margin-top:6px">The temporary password is shown only once. ' + esc(e.name) + ' will be asked to set a new one at first sign-in.</p></div>' +
+        '<div class="cred">' +
+          '<div class="cred-row"><div><small>User ID</small><span class="mono">' + e.id + '</span></div><button class="btn sm" data-action="copy" data-text="' + esc(e.id) + '">Copy</button></div>' +
+          '<div class="cred-row"><div><small>Temporary password</small><span class="mono">' + esc(m.password) + '</span></div><button class="btn sm" data-action="copy" data-text="' + esc(m.password) + '">Copy</button></div>' +
+        '</div>' +
+        '<div class="modal-actions"><button class="btn" data-action="copy" data-text="' + esc(text) + '">Copy both</button><button class="btn primary" data-action="close-modal">Done</button></div>';
+    }
+    if (m.kind === 'confirm-reset') {
+      const e = emp(m.id);
+      return '<div><div class="eyebrow">Reset password</div><h2 style="margin-top:8px">Reset password for ' + esc(e.name) + '?</h2><p class="muted" style="margin-top:6px">Their current password stops working right away. You get a new temporary password to share.</p></div>' +
+        '<div class="modal-actions"><button class="btn" data-action="close-modal">Cancel</button><button class="btn primary" data-action="reset-pw-yes" data-id="' + e.id + '">Reset password</button></div>';
+    }
+    if (m.kind === 'confirm-deactivate') {
+      const e = emp(m.id);
+      return '<div><div class="eyebrow">Deactivate</div><h2 style="margin-top:8px">Deactivate ' + esc(e.name) + '?</h2><p class="muted" style="margin-top:6px">They can no longer sign in. Their leave history stays. You can reactivate the account any time.</p></div>' +
+        (directReports(e.id).filter(x => x.active).length ? '<div class="note warn"><div><b>' + directReports(e.id).filter(x => x.active).length + ' people report to ' + esc(e.name.split(' ')[0]) + '.</b> Their leave requests go to People Ops until you give them a new leader in Reporting line.</div></div>' : '') +
+        '<div class="modal-actions"><button class="btn" data-action="close-modal">Cancel</button><button class="btn danger" data-action="deactivate-yes" data-id="' + e.id + '">Deactivate</button></div>';
+    }
+    if (m.kind === 'reject') {
+      const r = state.requests.find(x => x.id === m.id), e = emp(r.empId);
+      return '<div><div class="eyebrow">Reject request</div><h2 style="margin-top:8px">Reject ' + esc(e.name.split(' ')[0]) + '\'s ' + leaveType(r.type).name.toLowerCase() + '?</h2><p class="muted" style="margin-top:6px">' + fmtRange(r.start, r.end) + ' · ' + fmtDays(r.days) + '</p></div>' +
+        '<form id="reject-form" class="stack" novalidate><label class="field"><span>Reason for the employee</span><textarea class="input" id="rj-note" placeholder="e.g. Overlaps the stock-take week. Please move it by one week."></textarea></label><p class="error-text" id="rj-error" hidden></p>' +
+        '<div class="modal-actions"><button class="btn" type="button" data-action="close-modal">Cancel</button><button class="btn danger" type="submit">Reject request</button></div></form>';
+    }
+    return '';
+  }
+
+  // ---------- wiring ----------
+  function showError(id, msg) { const el = document.getElementById(id); if (!el) return; el.textContent = msg || ''; el.hidden = !msg; }
+
+  function afterRender() {
+    const u = me();
+    const lf = document.getElementById('login-form');
+    if (lf) lf.addEventListener('submit', ev => {
+      ev.preventDefault();
+      const id = document.getElementById('login-id').value.trim().toUpperCase();
+      const pw = document.getElementById('login-pw').value;
+      const e = emp(id);
+      if (!id || !pw) return showError('login-error', 'Enter your user ID and password.');
+      if (!e || e.password !== pw) return showError('login-error', 'User ID or password is incorrect. Check with your HR admin if you lost them.');
+      if (!e.active) return showError('login-error', 'This account is deactivated. Ask your HR admin to reactivate it.');
+      state.sessionUserId = e.id; ui.view = null; ui.draft = null; save(); render();
+    });
+
+    const ff = document.getElementById('force-form');
+    if (ff) ff.addEventListener('submit', ev => {
+      ev.preventDefault();
+      const a = document.getElementById('fc-new').value, b = document.getElementById('fc-confirm').value;
+      if (a.length < 8) return showError('fc-error', 'Use at least 8 characters.');
+      if (a === u.password) return showError('fc-error', 'Choose a password different from the temporary one.');
+      if (a !== b) return showError('fc-error', 'The two passwords do not match.');
+      u.password = a; u.mustChange = false; save(); render(); toast('Password saved. Welcome to Swing HRIS.');
+    });
+
+    const pf = document.getElementById('pw-form');
+    if (pf) pf.addEventListener('submit', ev => {
+      ev.preventDefault();
+      const cur = document.getElementById('pw-cur').value, a = document.getElementById('pw-new').value, b = document.getElementById('pw-confirm').value;
+      if (cur !== u.password) return showError('pw-error', 'Current password is incorrect.');
+      if (a.length < 8) return showError('pw-error', 'Use at least 8 characters.');
+      if (a !== b) return showError('pw-error', 'The two new passwords do not match.');
+      u.password = a; save(); render(); toast('Password updated');
+    });
+
+    const rf = document.getElementById('request-form');
+    if (rf) {
+      const sync = () => {
+        const d = ui.draft, t = leaveType(d.type);
+        const single = d.start && d.start === d.end;
+        if (!single && d.half !== 'none') d.half = 'none';
+        document.querySelectorAll('#rq-half button').forEach(b => { b.classList.toggle('on', b.dataset.half === d.half); b.disabled = !single && b.dataset.half !== 'none'; });
+        const days = countDays(d.start, d.end, u.country, d.half).days;
+        const need = docRequired(t, days);
+        document.getElementById('rq-doc-label').textContent = need ? 'Supporting document (required)' : 'Supporting document (optional)';
+        document.getElementById('rq-type-hint').textContent = t.code === 'SL' ? 'Two days or more needs a medical certificate (surat dokter / MC).' : t.hint ? t.hint + '. Attach proof.' : t.paid ? 'Paid. Deducted from your yearly balance.' : 'Unpaid. Not deducted from any balance.';
+        document.getElementById('rq-summary').innerHTML = summaryHTML(u);
+        showError('rq-error', '');
+      };
+      document.getElementById('rq-type').addEventListener('change', e => { ui.draft.type = e.target.value; sync(); });
+      document.getElementById('rq-start').addEventListener('change', e => { ui.draft.start = e.target.value; if (!ui.draft.end || ui.draft.end < ui.draft.start) { ui.draft.end = ui.draft.start; document.getElementById('rq-end').value = ui.draft.end; } sync(); });
+      document.getElementById('rq-end').addEventListener('change', e => { ui.draft.end = e.target.value; sync(); });
+      document.getElementById('rq-reason').addEventListener('input', e => { ui.draft.reason = e.target.value; });
+      document.getElementById('rq-doc').addEventListener('change', e => { const f = e.target.files[0]; ui.draft.attachment = f ? f.name : ''; document.getElementById('rq-doc-hint').textContent = f ? 'Attached: ' + f.name : 'PDF, JPG or PNG.'; sync(); });
+      document.getElementById('rq-half').addEventListener('click', e => { const b = e.target.closest('button[data-half]'); if (!b || b.disabled) return; ui.draft.half = b.dataset.half; sync(); });
+      rf.addEventListener('submit', ev => {
+        ev.preventDefault();
+        const err = validateDraft(u);
+        if (err) return showError('rq-error', err);
+        const d = ui.draft;
+        state.seq.req++;
+        const id = 'LV-' + String(state.seq.req).padStart(4, '0');
+        state.requests.push({ id, empId: u.id, type: d.type, start: d.start, end: d.end, half: d.half, days: countDays(d.start, d.end, u.country, d.half).days, reason: d.reason.trim(), attachment: d.attachment, status: 'pending', createdAt: todayISO(), decidedBy: null, decidedAt: null, note: '' });
+        save(); ui.draft = null; ui.view = 'mine'; ui.reqFilter = 'all'; render(); toast('Request ' + id + ' sent to ' + approverLabel(u).replace(' or People Ops', ''));
+      });
+      sync();
+    }
+
+    const q = document.getElementById('emp-q');
+    if (q) q.addEventListener('input', e => {
+      ui.empQuery = e.target.value; const pos = e.target.selectionStart; render();
+      const n = document.getElementById('emp-q'); n.focus(); n.setSelectionRange(pos, pos);
+    });
+
+    const polf = document.getElementById('policy-form');
+    if (polf) polf.addEventListener('submit', ev => {
+      ev.preventDefault();
+      state.leaveTypes.forEach(t => { if (!t.quota) return; ['ID', 'MY'].forEach(c => { const v = Number(document.getElementById('q-' + t.code + '-' + c).value); if (Number.isFinite(v) && v >= 0) t.quota[c] = v; }); });
+      save(); render(); toast('Leave quotas saved');
+    });
+
+    const hf = document.getElementById('hol-form');
+    if (hf) hf.addEventListener('submit', ev => {
+      ev.preventDefault();
+      const date = document.getElementById('hol-date').value, name = document.getElementById('hol-name').value.trim();
+      if (!date || !name) return showError('hol-error', 'Add both a date and a name.');
+      if (holidayOn(date, ui.holCountry)) return showError('hol-error', fmt(date) + ' is already a holiday in ' + COUNTRIES[ui.holCountry] + '.');
+      state.holidays[ui.holCountry].push({ date, name });
+      save(); render(); toast(name + ' added to ' + COUNTRIES[ui.holCountry]);
+    });
+
+    const ef = document.getElementById('emp-form');
+    if (ef) {
+      const editId = ef.dataset.edit;
+      const preview = () => { if (!editId) document.getElementById('ne-preview').textContent = 'User ID will be ' + nextEmpId(document.getElementById('ne-country').value) + '.'; };
+      document.getElementById('ne-country').addEventListener('change', preview); preview();
+      ef.addEventListener('submit', ev => {
+        ev.preventDefault();
+        const name = document.getElementById('ne-name').value.trim(), email = document.getElementById('ne-email').value.trim();
+        const role = document.getElementById('ne-role').value, managerId = document.getElementById('ne-manager').value || null;
+        if (name.length < 2) return showError('ne-error', 'Enter the employee\'s full name.');
+        if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return showError('ne-error', 'That email does not look right. Leave it empty or fix it.');
+        if (email && state.employees.some(e => e.id !== editId && e.email.toLowerCase() === email.toLowerCase())) return showError('ne-error', email + ' already belongs to another account.');
+        const fields = { name, email, department: document.getElementById('ne-dept').value, title: document.getElementById('ne-title').value.trim() || 'Employee', grade: document.getElementById('ne-grade').value, role, managerId };
+        if (editId) {
+          const e = emp(editId);
+          const reports = directReports(editId).length;
+          if (role === 'reportee' && reports) return showError('ne-error', e.name.split(' ')[0] + ' has ' + reports + ' direct reports. Move them to another leader in Reporting line before changing access to Reportee.');
+          if (editId === u.id && role !== 'admin') return showError('ne-error', 'You cannot remove your own HR admin access. Ask another HR admin.');
+          Object.assign(e, fields); save(); ui.modal = null; render(); toast(e.name + ' updated');
+          return;
+        }
+        const country = document.getElementById('ne-country').value;
+        const password = generatePassword();
+        const e = Object.assign({ id: nextEmpId(country), country, joinDate: document.getElementById('ne-join').value || todayISO(), password, mustChange: true, active: true }, fields);
+        state.employees.push(e); save();
+        openModal({ kind: 'creds', id: e.id, password });
+      });
+    }
+
+    const rjf = document.getElementById('reject-form');
+    if (rjf) rjf.addEventListener('submit', ev => {
+      ev.preventDefault();
+      const note = document.getElementById('rj-note').value.trim();
+      if (!note) return showError('rj-error', 'Add a short reason. The employee sees it on their request.');
+      const r = state.requests.find(x => x.id === ui.modal.id);
+      Object.assign(r, { status: 'rejected', note, decidedBy: u.id, decidedAt: todayISO() });
+      save(); ui.modal = null; render(); toast(r.id + ' rejected');
+    });
+  }
+
+  app.addEventListener('click', ev => {
+    const nav = ev.target.closest('[data-nav]');
+    if (nav) { ui.view = nav.dataset.nav; ui.confirmCancel = null; render(); window.scrollTo(0, 0); return; }
+    const f = ev.target.closest('[data-filter]'); if (f) { ui.reqFilter = f.dataset.filter; render(); return; }
+    const tab = ev.target.closest('[data-tab]'); if (tab) { ui.approvalsTab = tab.dataset.tab; render(); return; }
+    const cc = ev.target.closest('[data-cal-country]'); if (cc) { ui.calCountry = cc.dataset.calCountry; render(); return; }
+    const hc = ev.target.closest('[data-hol-country]'); if (hc) { ui.holCountry = hc.dataset.holCountry; render(); return; }
+    if (ev.target.classList.contains('overlay')) { closeModal(); return; }
+    const a = ev.target.closest('[data-action]');
+    if (!a) return;
+    const id = a.dataset.id, u = me();
+    switch (a.dataset.action) {
+      case 'demo': {
+        const e = emp(id);
+        document.getElementById('login-id').value = e.id;
+        document.getElementById('login-pw').value = e.password;
+        showError('login-error', '');
+        break;
+      }
+      case 'toggle-pw': { const i = document.getElementById('login-pw'); i.type = i.type === 'password' ? 'text' : 'password'; a.textContent = i.type === 'password' ? 'Show' : 'Hide'; break; }
+      case 'logout': state.sessionUserId = null; ui.view = null; ui.modal = null; ui.draft = null; save(); render(); break;
+      case 'reset-demo': try { localStorage.removeItem(STORE_KEY); } catch (e) {} state = seed(); ui.view = null; ui.draft = null; render(); toast('Demo data reset'); break;
+      case 'reset-draft': ui.draft = null; render(); break;
+      case 'cancel-ask': ui.confirmCancel = id; render(); break;
+      case 'cancel-no': ui.confirmCancel = null; render(); break;
+      case 'cancel-yes': { const r = state.requests.find(x => x.id === id); r.status = 'cancelled'; ui.confirmCancel = null; save(); render(); toast(r.id + ' cancelled'); break; }
+      case 'approve': { const r = state.requests.find(x => x.id === id); if (!canApprove(u, r)) { toast('Only ' + approverLabel(emp(r.empId)) + ' can approve this request'); break; } Object.assign(r, { status: 'approved', decidedBy: u.id, decidedAt: todayISO(), note: '' }); save(); render(); toast(r.id + ' approved for ' + emp(r.empId).name); break; }
+      case 'reject': { const r = state.requests.find(x => x.id === id); if (canApprove(u, r)) openModal({ kind: 'reject', id }); break; }
+      case 'edit-emp': openModal({ kind: 'edit-emp', id }); break;
+      case 'add-emp': openModal({ kind: 'add-emp' }); break;
+      case 'close-modal': closeModal(); break;
+      case 'copy': copy(a.dataset.text, a); break;
+      case 'reset-pw': openModal({ kind: 'confirm-reset', id }); break;
+      case 'reset-pw-yes': { const e = emp(id); const password = generatePassword(); e.password = password; e.mustChange = true; save(); openModal({ kind: 'creds', id, password, reset: true }); break; }
+      case 'toggle-active': { const e = emp(id); if (e.active) openModal({ kind: 'confirm-deactivate', id }); else { e.active = true; save(); render(); toast(e.name + ' reactivated'); } break; }
+      case 'deactivate-yes': { const e = emp(id); e.active = false; save(); ui.modal = null; render(); toast(e.name + ' deactivated'); break; }
+      case 'hol-remove': { const list = state.holidays[ui.holCountry]; const i = list.findIndex(h => h.date === a.dataset.date); if (i >= 0) list.splice(i, 1); save(); render(); toast(a.dataset.name + ' removed'); break; }
+      case 'cal-prev': case 'cal-next': { const d = fromISO(ui.calMonth + '-01'); d.setMonth(d.getMonth() + (a.dataset.action === 'cal-next' ? 1 : -1)); ui.calMonth = toISO(d).slice(0, 7); render(); break; }
+      case 'cal-today': ui.calMonth = todayISO().slice(0, 7); render(); break;
+    }
+  });
+
+  app.addEventListener('change', ev => {
+    const sel = ev.target.closest('select[data-org]');
+    if (!sel) return;
+    const e = emp(sel.dataset.org), managerId = sel.value || null;
+    if (managerId && (managerId === e.id || isBelow(managerId, e.id))) { toast('That would put ' + e.name + ' under their own team. Pick someone else.'); render(); return; }
+    e.managerId = managerId; save(); render();
+    toast(managerId ? e.name + ' now reports to ' + emp(managerId).name : e.name + ' is now at the top of the line');
+  });
+
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && ui.modal) closeModal(); });
+
+  state = load();
+  render();
+})();
+</script>
+</body>
+</html>
