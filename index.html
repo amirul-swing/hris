@@ -160,6 +160,17 @@ td.actions { white-space: nowrap; text-align: right; }
 .nav button { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 0; background: transparent; text-align: left; padding: 10px 12px; border-radius: 10px; font-weight: 600; color: var(--muted); }
 .nav button:hover { background: var(--surface-2); color: var(--ink); }
 .nav button.on { background: var(--surface-2); color: var(--accent); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.nav-group { display: grid; gap: 4px; }
+.nav-group + .nav-group { margin-top: 14px; }
+.nav-label { font-family: var(--font-display); font-size: 10.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); padding: 0 12px 4px; }
+.org { display: grid; gap: 10px; }
+.org > *, .org-children > *, .org-item { min-width: 0; }
+.org-children { display: grid; gap: 10px; margin-left: 22px; padding-left: 18px; border-left: 2px solid var(--line-strong); }
+.org-node { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); }
+.org-node.leader { border-color: var(--line-strong); background: var(--surface-2); box-shadow: none; }
+.org-node .grow { flex: 1; min-width: 160px; }
+.org-node b { font-family: var(--font-display); }
+.org-node select { width: auto; max-width: 100%; min-height: 36px; padding: 6px 10px; font-size: 13.5px; }
 .nav .count { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--grad); color: #fff; font-size: 12px; font-weight: 700; text-align: center; }
 .side-foot { margin-top: auto; display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
 .me { display: flex; gap: 10px; align-items: center; padding-inline: 4px; min-width: 0; }
@@ -266,6 +277,12 @@ td.actions { white-space: nowrap; text-align: right; }
   .side { position: static; height: auto; padding: 14px 16px; gap: 12px; border-right: 0; border-bottom: 1px solid var(--line); }
   .side-brand { display: flex; align-items: center; justify-content: space-between; padding: 0; }
   .nav { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
+  .nav-group { display: contents; }
+  .nav-label { display: none; }
+  .org-children { margin-left: 8px; padding-left: 10px; }
+  .org-node .grow { min-width: 0; flex-basis: calc(100% - 60px); }
+  .org-node label { flex: 1 1 100%; min-width: 0; }
+  .org-node select { width: 100%; min-width: 0; }
   .nav button { white-space: nowrap; flex: none; }
   .side-foot { margin: 0; padding-top: 10px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
   .side-foot .btn-row { display: flex; gap: 6px; }
@@ -286,7 +303,8 @@ td.actions { white-space: nowrap; text-align: right; }
 <div id="app"></div>
 <script>
 (function () {
-  const STORE_KEY = 'swing-hris-attendance-v1';
+  const STORE_KEY = 'swing-hris-attendance-v2';
+  const ROLE_LABEL = { admin: 'HR admin', leader: 'Leader', reportee: 'Reportee' };
   const GRADES = ['1.1', '1.2', '2.1', '2.2', '3.1', '3.2', '4.1', '4.2'];
   const COUNTRIES = { ID: 'Indonesia', MY: 'Malaysia' };
   const DEPARTMENTS = ['Product', 'Tech', 'Operations', 'Growth', 'Marketing', 'People', 'Finance', 'Regional', 'Business'];
@@ -332,7 +350,7 @@ td.actions { white-space: nowrap; text-align: right; }
   function seed() {
     const t = todayISO();
     const s = {
-      seq: { emp: 6, req: 0 },
+      seq: { req: 0 },
       sessionUserId: null,
       leaveTypes: [
         { code: 'AL', name: 'Annual leave', paid: true, quota: { ID: 12, MY: 14 }, docRule: 'none' },
@@ -343,12 +361,15 @@ td.actions { white-space: nowrap; text-align: right; }
       ],
       holidays: seedHolidays(),
       employees: [
-        { id: 'SW-ID-0001', name: 'Nadia Kartika', email: 'nadia@getswing.app', country: 'ID', department: 'People', title: 'People Ops Lead', grade: '2.2', role: 'admin', joinDate: '2023-02-01', password: 'swing-admin', mustChange: false, active: true },
-        { id: 'SW-ID-0002', name: 'Rina Puspita', email: 'rina@getswing.app', country: 'ID', department: 'Operations', title: 'Growth Operations Associate', grade: '1.2', role: 'employee', joinDate: '2024-06-10', password: 'swing2026', mustChange: false, active: true },
-        { id: 'SW-MY-0003', name: 'Aiman Hakim', email: 'aiman@getswing.app', country: 'MY', department: 'Operations', title: 'Country Manager', grade: '3.1', role: 'employee', joinDate: '2022-09-05', password: 'swing2026', mustChange: false, active: true },
-        { id: 'SW-ID-0004', name: 'Dimas Pratama', email: 'dimas@getswing.app', country: 'ID', department: 'Tech', title: 'Senior Engineer', grade: '2.1', role: 'employee', joinDate: '2023-11-20', password: 'swing2026', mustChange: false, active: true },
-        { id: 'SW-MY-0005', name: 'Tan Mei Ling', email: 'meiling@getswing.app', country: 'MY', department: 'Marketing', title: 'Marketing Specialist', grade: '2.1', role: 'employee', joinDate: '2024-01-15', password: 'swing2026', mustChange: false, active: true },
-        { id: 'SW-ID-0006', name: 'Sarah Wijaya', email: '', country: 'ID', department: 'Finance', title: 'Finance Associate', grade: '1.1', role: 'employee', joinDate: '2025-08-01', password: 'swing2026', mustChange: false, active: true }
+        { id: 'SW-ID-0001', name: 'Nadia Kartika', email: 'nadia@getswing.app', country: 'ID', department: 'People', title: 'People Ops Lead', grade: '2.2', role: 'admin', managerId: 'SW-ID-0007', joinDate: '2023-02-01', password: 'swing-admin', mustChange: false, active: true },
+        { id: 'SW-ID-0002', name: 'Rina Puspita', email: 'rina@getswing.app', country: 'ID', department: 'Operations', title: 'Growth Operations Associate', grade: '1.2', role: 'reportee', managerId: 'SW-ID-0008', joinDate: '2024-06-10', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-MY-0003', name: 'Aiman Hakim', email: 'aiman@getswing.app', country: 'MY', department: 'Operations', title: 'Country Manager', grade: '3.1', role: 'leader', managerId: 'SW-ID-0007', joinDate: '2022-09-05', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-ID-0004', name: 'Dimas Pratama', email: 'dimas@getswing.app', country: 'ID', department: 'Tech', title: 'Tech Lead', grade: '3.1', role: 'leader', managerId: 'SW-ID-0007', joinDate: '2023-11-20', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-MY-0005', name: 'Tan Mei Ling', email: 'meiling@getswing.app', country: 'MY', department: 'Marketing', title: 'Marketing Specialist', grade: '2.1', role: 'reportee', managerId: 'SW-MY-0003', joinDate: '2024-01-15', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-ID-0006', name: 'Sarah Wijaya', email: '', country: 'ID', department: 'Operations', title: 'Fulfilment Associate', grade: '1.1', role: 'reportee', managerId: 'SW-ID-0008', joinDate: '2025-08-01', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-ID-0007', name: 'Budi Santoso', email: 'budi@getswing.app', country: 'ID', department: 'Business', title: 'Chief Operating Officer', grade: '4.1', role: 'leader', managerId: null, joinDate: '2021-03-01', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-ID-0008', name: 'Fajar Nugroho', email: 'fajar@getswing.app', country: 'ID', department: 'Operations', title: 'Head of Operations ID', grade: '3.1', role: 'leader', managerId: 'SW-ID-0007', joinDate: '2022-01-10', password: 'swing2026', mustChange: false, active: true },
+        { id: 'SW-ID-0009', name: 'Andi Saputra', email: 'andi@getswing.app', country: 'ID', department: 'Tech', title: 'Engineer', grade: '2.1', role: 'reportee', managerId: 'SW-ID-0004', joinDate: '2025-02-17', password: 'swing2026', mustChange: false, active: true }
       ],
       requests: []
     };
@@ -356,7 +377,7 @@ td.actions { white-space: nowrap; text-align: right; }
       s.seq.req++;
       const emp = s.employees.find(e => e.id === empId);
       const days = countDays(start, end, emp.country, extra && extra.half, s.holidays).days;
-      s.requests.push(Object.assign({ id: 'LV-' + String(s.seq.req).padStart(4, '0'), empId, type, start, end, half: 'none', days, reason: '', attachment: '', status, createdAt: addDays(start, -7), decidedBy: status === 'pending' ? null : 'SW-ID-0001', decidedAt: status === 'pending' ? null : addDays(start, -5), note: '' }, extra || {}, { days }));
+      s.requests.push(Object.assign({ id: 'LV-' + String(s.seq.req).padStart(4, '0'), empId, type, start, end, half: 'none', days, reason: '', attachment: '', status, createdAt: addDays(start, -7), decidedBy: status === 'pending' ? null : (emp.managerId || 'SW-ID-0001'), decidedAt: status === 'pending' ? null : addDays(start, -5), note: '' }, extra || {}, { days }));
     };
     const p1 = nextWorkday(addDays(t, -48)), p2 = nextWorkday(addDays(t, -26));
     add('SW-ID-0002', 'AL', p1, nextWorkday(p1, 2), 'approved', { reason: 'Family trip to Yogyakarta' });
@@ -369,6 +390,12 @@ td.actions { white-space: nowrap; text-align: right; }
     add('SW-ID-0004', 'AL', d1, nextWorkday(d1, 4), 'pending', { reason: 'Year-end trip to Lombok', createdAt: addDays(t, -1) });
     const d2 = nextWorkday(t, 16);
     add('SW-ID-0006', 'SP', d2, nextWorkday(d2, 2), 'pending', { reason: 'Own wedding', attachment: 'Undangan_pernikahan.pdf', createdAt: addDays(t, -2) });
+    const d5 = nextWorkday(t, 11);
+    add('SW-ID-0009', 'AL', d5, nextWorkday(d5, 1), 'pending', { reason: 'Moving house', createdAt: t });
+    const d6 = nextWorkday(t, 30);
+    add('SW-ID-0008', 'AL', d6, nextWorkday(d6, 3), 'pending', { reason: 'Umrah with parents', createdAt: addDays(t, -3) });
+    const d7 = nextWorkday(addDays(t, -20));
+    add('SW-ID-0009', 'SL', d7, d7, 'approved', { reason: 'Migraine' });
     const d3 = nextWorkday(t, 4);
     add('SW-MY-0005', 'AL', d3, nextWorkday(d3, 2), 'approved', { reason: 'Penang with family', createdAt: addDays(t, -9) });
     const d4 = nextWorkday(t, 22);
@@ -413,6 +440,27 @@ td.actions { white-space: nowrap; text-align: right; }
     const pending = mine.filter(r => r.status === 'pending').reduce((a, r) => a + r.days, 0);
     const quota = t.quota ? Number(t.quota[e.country]) : null;
     return { quota, used, pending, available: quota == null ? null : quota - used - pending };
+  }
+
+  const directReports = id => state.employees.filter(e => e.managerId === id);
+  const isLeader = u => u.role === 'leader' || (u.role === 'admin' && directReports(u.id).length > 0);
+  function canApprove(u, r) {
+    if (!u || r.empId === u.id || r.status !== 'pending') return false;
+    if (u.role === 'admin') return true;
+    return u.role === 'leader' && emp(r.empId).managerId === u.id;
+  }
+  function approverLabel(e) {
+    const m = e.managerId && emp(e.managerId);
+    return m && m.active ? esc(m.name) + ' or People Ops' : 'People Ops';
+  }
+  function isBelow(candidateId, rootId) {
+    let cur = emp(candidateId), guard = 0;
+    while (cur && cur.managerId && guard++ < 50) { if (cur.managerId === rootId) return true; cur = emp(cur.managerId); }
+    return false;
+  }
+  function leaderOptions(forId, selected) {
+    const opts = state.employees.filter(e => (e.active || e.id === selected) && e.id !== forId && (e.role === 'leader' || e.role === 'admin') && !(forId && isBelow(e.id, forId)));
+    return '<option value="">No one (top of the line)</option>' + opts.map(e => '<option value="' + e.id + '"' + (selected === e.id ? ' selected' : '') + '>' + esc(e.name) + ' · ' + esc(e.title) + '</option>').join('');
   }
 
   function docRequired(t, days) {
@@ -466,13 +514,13 @@ td.actions { white-space: nowrap; text-align: right; }
 
   // ---------- login ----------
   function loginView() {
-    const demos = state.employees.filter(e => e.active).slice(0, 4);
+    const demos = ['SW-ID-0001', 'SW-ID-0007', 'SW-ID-0008', 'SW-ID-0002'].map(emp).filter(e => e && e.active);
     return '<div class="login">' +
       '<section class="login-hero">' +
         '<div class="logo on-grad">' + LOGO_SVG + 'swing</div>' +
         '<div><div class="eyebrow">People · HRIS · Attendance</div>' +
         '<h1>Time off,<br>in one place.</h1>' +
-        '<p>Request paid leave and sick leave, track your balance, and see the public holidays for Indonesia and Malaysia. People Ops approves from the same screen.</p></div>' +
+        '<p>Request paid leave and sick leave, track your balance, and see the public holidays for Indonesia and Malaysia. Your leader or People Ops approves it.</p></div>' +
         '<div class="hero-cards">' +
           '<div>Paid leave<strong>12-14 days a year</strong></div>' +
           '<div>Sick leave<strong>MC after day 1</strong></div>' +
@@ -489,7 +537,7 @@ td.actions { white-space: nowrap; text-align: right; }
         '</form>' +
         '<div class="note"><div><b>Email sign-in is not connected yet.</b> Your HR admin creates your user ID and a temporary password. You set your own password the first time you sign in.</div></div>' +
         '<div class="stack" style="gap:10px"><span class="label">Demo accounts · click to fill</span><div class="demo-list">' +
-          demos.map(e => '<button type="button" class="demo" data-action="demo" data-id="' + e.id + '"><span><b>' + esc(e.name) + '</b><span class="faint mono">' + e.id + '</span></span><span class="tag">' + (e.role === 'admin' ? 'HR admin' : 'Employee · ' + e.country) + '</span></button>').join('') +
+          demos.map(e => '<button type="button" class="demo" data-action="demo" data-id="' + e.id + '"><span><b>' + esc(e.name) + '</b><span class="faint mono">' + e.id + '</span></span><span class="tag">' + ROLE_LABEL[e.role] + ' · ' + e.country + '</span></button>').join('') +
         '</div></div>' +
       '</div></section>' +
     '</div>';
@@ -509,19 +557,26 @@ td.actions { white-space: nowrap; text-align: right; }
   }
 
   // ---------- shell ----------
-  const EMP_NAV = [['overview', 'Overview'], ['request', 'Request leave'], ['mine', 'My requests'], ['holidays', 'Public holidays'], ['account', 'Account']];
-  const ADMIN_NAV = [['a-overview', 'Overview'], ['a-approvals', 'Approvals'], ['a-employees', 'Employees & access'], ['a-calendar', 'Leave calendar'], ['a-policy', 'Leave policy'], ['a-holidays', 'Public holidays'], ['account', 'Account']];
+  function navFor(u) {
+    const teamPending = state.requests.filter(r => r.status === 'pending' && emp(r.empId).managerId === u.id).length;
+    const allPending = state.requests.filter(r => canApprove(u, r)).length;
+    const groups = [{ label: 'My leave', items: [['overview', 'Overview'], ['request', 'Request leave'], ['mine', 'My requests'], ['holidays', 'Public holidays']] }];
+    if (isLeader(u)) groups.push({ label: 'My team', items: [['t-approvals', 'Team approvals', teamPending], ['t-team', 'Team members'], ['t-calendar', 'Team calendar']] });
+    if (u.role === 'admin') groups.push({ label: 'People Ops', items: [['a-overview', 'Dashboard'], ['a-approvals', 'All approvals', allPending], ['a-employees', 'Employees & access'], ['a-org', 'Reporting line'], ['a-calendar', 'Leave calendar'], ['a-policy', 'Leave policy'], ['a-holidays', 'Public holidays']] });
+    groups.push({ label: 'Settings', items: [['account', 'Account']] });
+    return groups;
+  }
 
   function shellView(u) {
-    const nav = u.role === 'admin' ? ADMIN_NAV : EMP_NAV;
-    if (!ui.view || !nav.some(n => n[0] === ui.view)) ui.view = nav[0][0];
-    const pendingCount = state.requests.filter(r => r.status === 'pending').length;
+    const groups = navFor(u);
+    const keys = groups.flatMap(g => g.items.map(i => i[0]));
+    if (!ui.view || !keys.includes(ui.view)) ui.view = u.role === 'admin' ? 'a-overview' : isLeader(u) ? 't-approvals' : 'overview';
     const v = VIEWS[ui.view](u);
     return '<div class="shell">' +
       '<aside class="side">' +
-        '<div class="side-brand"><div class="logo">' + LOGO_SVG + 'swing</div><small>' + (u.role === 'admin' ? 'HRIS · Admin' : 'HRIS · Attendance') + '</small></div>' +
-        '<nav class="nav" aria-label="Main">' + nav.map(([k, label]) =>
-          '<button class="' + (ui.view === k ? 'on' : '') + '" data-nav="' + k + '"><span>' + label + '</span>' + (k === 'a-approvals' && pendingCount ? '<span class="count num">' + pendingCount + '</span>' : '') + '</button>').join('') + '</nav>' +
+        '<div class="side-brand"><div class="logo">' + LOGO_SVG + 'swing</div><small>HRIS · ' + ROLE_LABEL[u.role] + '</small></div>' +
+        '<nav class="nav" aria-label="Main">' + groups.map(g => '<div class="nav-group"><div class="nav-label">' + g.label + '</div>' + g.items.map(([k, label, count]) =>
+          '<button class="' + (ui.view === k ? 'on' : '') + '" data-nav="' + k + '"><span>' + label + '</span>' + (count ? '<span class="count num">' + count + '</span>' : '') + '</button>').join('') + '</div>').join('') + '</nav>' +
         '<div class="side-foot">' +
           '<div class="me"><span class="avatar">' + initials(u.name) + '</span><div><b>' + esc(u.name) + '</b><span class="faint mono" style="font-size:12px">' + u.id + '</span></div></div>' +
           '<div class="btn-row"><button class="btn sm" data-action="logout">Sign out</button></div>' +
@@ -560,12 +615,14 @@ td.actions { white-space: nowrap; text-align: right; }
     const t = todayISO();
     const upcoming = state.requests.filter(r => r.empId === u.id && r.end >= t && (r.status === 'approved' || r.status === 'pending')).sort((a, b) => a.start.localeCompare(b.start));
     const tiles = ['AL', 'SL', 'SP', 'UL'].map(c => balanceTile(u, leaveType(c))).join('');
+    const teamWaiting = state.requests.filter(r => r.status === 'pending' && emp(r.empId).managerId === u.id).length;
     return {
       eyebrow: 'Attendance · ' + new Date().getFullYear(),
       title: 'Hi ' + esc(u.name.split(' ')[0]) + ', here is your time off',
-      sub: esc(u.title) + ' · Grade ' + u.grade + ' · ' + COUNTRIES[u.country],
+      sub: esc(u.title) + ' · Grade ' + u.grade + ' · ' + COUNTRIES[u.country] + (u.managerId && emp(u.managerId) ? ' · Reports to ' + esc(emp(u.managerId).name) : ''),
       actions: '<button class="btn primary" data-nav="request">Request leave</button>',
-      body: '<section class="grid-4">' + tiles + '</section>' +
+      body: (isLeader(u) && teamWaiting ? '<div class="card grad row" style="justify-content:space-between"><div><span class="label">My team</span><h3 style="margin-top:6px">' + teamWaiting + ' leave ' + (teamWaiting === 1 ? 'request is' : 'requests are') + ' waiting for you</h3></div><button class="btn" data-nav="t-approvals">Review now</button></div>' : '') +
+        '<section class="grid-4">' + tiles + '</section>' +
         '<section class="grid-2">' +
           '<div class="card"><div class="card-head"><h3>Your upcoming time off</h3><button class="btn ghost sm" data-nav="mine">All requests</button></div>' +
             (upcoming.length ? '<div class="list">' + upcoming.map(r => '<div class="list-item"><div class="date-chip"><b class="num">' + fromISO(r.start).getDate() + '</b><small>' + fmt(r.start, { month: 'short' }) + '</small></div><div class="grow"><b>' + leaveType(r.type).name + '</b><div class="faint">' + fmtRange(r.start, r.end) + ' · ' + fmtDays(r.days) + '</div></div>' + statusPill(r.status) + '</div>').join('') + '</div>' : '<p class="empty">Nothing booked yet.</p>') +
@@ -617,7 +674,7 @@ td.actions { white-space: nowrap; text-align: right; }
         '<dt>Dates</dt><dd>' + (d.start && d.end && d.end >= d.start ? fmtRange(d.start, d.end) : '-') + '</dd>' +
         '<dt>Paid</dt><dd>' + (t.paid ? 'Yes' : 'No, unpaid') + '</dd>' +
         (b.available == null ? '' : '<dt>Available now</dt><dd>' + b.available + ' days</dd><dt>After this request</dt><dd>' + after + ' days</dd>') +
-        '<dt>Approver</dt><dd>People Ops</dd>' +
+        '<dt>Approver</dt><dd>' + approverLabel(u) + '</dd>' +
       '</dl>' +
       (c.skipped.length ? '<div class="skipped"><span class="label">Public holidays skipped</span>' + c.skipped.map(s => '<span><b>' + fmtShort(s.date) + '</b>' + esc(s.name) + '</span>').join('') + '</div>' : '');
   }
@@ -645,8 +702,8 @@ td.actions { white-space: nowrap; text-align: right; }
       title: 'My requests',
       actions: '<button class="btn primary" data-nav="request">Request leave</button>',
       body: '<div class="card"><div class="card-head"><div class="seg">' + filters.map(f => '<button data-filter="' + f + '" class="' + (ui.reqFilter === f ? 'on' : '') + '">' + f[0].toUpperCase() + f.slice(1) + (f === 'all' ? '' : ' (' + all.filter(r => r.status === f).length + ')') + '</button>').join('') + '</div></div>' +
-        (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Ref</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Approver note</th><th></th></tr></thead><tbody>' +
-          rows.map(r => '<tr><td class="mono">' + r.id + '</td><td>' + leaveType(r.type).name + (r.attachment ? '<div class="faint" style="font-size:12.5px">' + esc(r.attachment) + '</div>' : '') + '</td><td class="num">' + fmtRange(r.start, r.end) + (r.half !== 'none' ? '<div class="faint">' + (r.half === 'am' ? 'Morning' : 'Afternoon') + '</div>' : '') + '</td><td class="num">' + r.days + '</td><td>' + statusPill(r.status) + '</td><td class="muted">' + (esc(r.note) || '<span class="faint">-</span>') + '</td><td class="actions">' +
+        (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Ref</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Decided by</th><th>Approver note</th><th></th></tr></thead><tbody>' +
+          rows.map(r => '<tr><td class="mono">' + r.id + '</td><td>' + leaveType(r.type).name + (r.attachment ? '<div class="faint" style="font-size:12.5px">' + esc(r.attachment) + '</div>' : '') + '</td><td class="num">' + fmtRange(r.start, r.end) + (r.half !== 'none' ? '<div class="faint">' + (r.half === 'am' ? 'Morning' : 'Afternoon') + '</div>' : '') + '</td><td class="num">' + r.days + '</td><td>' + statusPill(r.status) + '</td><td>' + (r.status === 'pending' ? '<span class="faint">' + approverLabel(u) + '</span>' : r.status === 'cancelled' ? '<span class="faint">You</span>' : decidedByName(r)) + '</td><td class="muted">' + (esc(r.note) || '<span class="faint">-</span>') + '</td><td class="actions">' +
             (r.status === 'pending' || (r.status === 'approved' && r.start > todayISO())
               ? (ui.confirmCancel === r.id ? '<span class="row" style="justify-content:flex-end;gap:6px"><span class="muted" style="font-size:13px">Cancel this request?</span><button class="btn danger sm" data-action="cancel-yes" data-id="' + r.id + '">Yes, cancel</button><button class="btn sm" data-action="cancel-no">Keep</button></span>' : '<button class="btn ghost sm" data-action="cancel-ask" data-id="' + r.id + '">Cancel</button>')
               : '') + '</td></tr>').join('') +
@@ -681,7 +738,7 @@ td.actions { white-space: nowrap; text-align: right; }
     body: '<div class="grid-2">' +
       '<div class="card"><div class="row" style="margin-bottom:16px"><span class="avatar lg">' + initials(u.name) + '</span><div><h3>' + esc(u.name) + '</h3><span class="muted">' + esc(u.title) + '</span></div></div>' +
         '<div class="table-wrap"><table><tbody>' +
-          [['User ID', '<span class="mono">' + u.id + '</span>'], ['Access', u.role === 'admin' ? 'HR admin' : 'Employee'], ['Country', COUNTRIES[u.country]], ['Department', esc(u.department)], ['Grade', u.grade], ['Joined', fmt(u.joinDate)], ['Work email', u.email ? esc(u.email) + ' <span class="faint">(sign-in not connected)</span>' : '<span class="faint">Not set</span>']]
+          [['User ID', '<span class="mono">' + u.id + '</span>'], ['Access', ROLE_LABEL[u.role]], ['Reports to', u.managerId && emp(u.managerId) ? esc(emp(u.managerId).name) : '<span class="faint">No one</span>'], ['Country', COUNTRIES[u.country]], ['Department', esc(u.department)], ['Grade', u.grade], ['Joined', fmt(u.joinDate)], ['Work email', u.email ? esc(u.email) + ' <span class="faint">(sign-in not connected)</span>' : '<span class="faint">Not set</span>']]
           .map(([k, v]) => '<tr><td class="muted" style="width:40%">' + k + '</td><td>' + v + '</td></tr>').join('') +
         '</tbody></table></div></div>' +
       '<form id="pw-form" class="card stack" novalidate><h3>Change password</h3>' +
@@ -696,49 +753,137 @@ td.actions { white-space: nowrap; text-align: right; }
   });
 
   // ---------- admin views ----------
-  function whoOff(iso) {
-    return state.requests.filter(r => r.status === 'approved' && isOn(r, iso)).map(r => ({ r, e: emp(r.empId) }));
+  function whoOff(iso, ids) {
+    return state.requests.filter(r => r.status === 'approved' && isOn(r, iso) && (!ids || ids.includes(r.empId))).map(r => ({ r, e: emp(r.empId) }));
   }
 
-  function approvalCard(r, compact) {
+  function approvalCard(r, compact, u) {
     const e = emp(r.empId), t = leaveType(r.type), b = balance(e, r.type);
+    const m = e.managerId && emp(e.managerId);
     const missingDoc = docRequired(t, r.days) && !r.attachment;
+    const overriding = u.role === 'admin' && m && m.id !== u.id;
     return '<div class="card approval">' +
-      '<div><div class="who"><span class="avatar">' + initials(e.name) + '</span><div><b style="font-family:var(--font-display)">' + esc(e.name) + '</b><div class="faint" style="font-size:13px"><span class="mono">' + e.id + '</span> · ' + esc(e.department) + ' · ' + e.country + '</div></div></div>' +
+      '<div><div class="who"><span class="avatar">' + initials(e.name) + '</span><div><b style="font-family:var(--font-display)">' + esc(e.name) + '</b><div class="faint" style="font-size:13px"><span class="mono">' + e.id + '</span> · ' + esc(e.title) + ' · ' + e.country + '</div></div></div>' +
         '<div class="facts num">' +
           '<div><small>Type</small><span>' + t.name + (t.paid ? '' : ' (unpaid)') + '</span></div>' +
           '<div><small>Dates</small><span>' + fmtRange(r.start, r.end) + (r.half !== 'none' ? ' · ' + (r.half === 'am' ? 'AM' : 'PM') : '') + '</span></div>' +
           '<div><small>Working days</small><span>' + r.days + '</span></div>' +
           (b.quota == null ? '' : '<div><small>Balance after approval</small><span>' + (b.quota - b.used - r.days) + ' of ' + b.quota + '</span></div>') +
+          '<div><small>Leader</small><span>' + (m ? esc(m.name) : 'None, People Ops approves') + '</span></div>' +
           '<div><small>Submitted</small><span>' + fmt(r.createdAt) + '</span></div>' +
         '</div>' +
         (compact ? '' : (r.reason ? '<blockquote>' + esc(r.reason) + '</blockquote>' : '') +
-        '<div class="row" style="margin-top:12px">' + (r.attachment ? '<span class="tag">' + esc(r.attachment) + '</span>' : '') + (missingDoc ? '<span class="pill rejected">Medical certificate missing</span>' : '') + '</div>') +
+        '<div class="row" style="margin-top:12px">' + (r.attachment ? '<span class="tag">' + esc(r.attachment) + '</span>' : '') + (missingDoc ? '<span class="pill rejected">Medical certificate missing</span>' : '') + (overriding ? '<span class="faint" style="font-size:13px">You are approving on behalf of ' + esc(m.name.split(' ')[0]) + '.</span>' : '') + '</div>') +
       '</div>' +
-      '<div class="btns"><button class="btn ok sm" data-action="approve" data-id="' + r.id + '">Approve</button><button class="btn danger sm" data-action="reject" data-id="' + r.id + '">Reject</button></div>' +
+      (canApprove(u, r) ? '<div class="btns"><button class="btn ok sm" data-action="approve" data-id="' + r.id + '">Approve</button><button class="btn danger sm" data-action="reject" data-id="' + r.id + '">Reject</button></div>' : '<div></div>') +
     '</div>';
   }
 
+  const decidedByName = r => r.decidedBy && emp(r.decidedBy) ? esc(emp(r.decidedBy).name) : '-';
+
+  function approvalsBody(u, scopeIds) {
+    const inScope = r => r.empId !== u.id && (!scopeIds || scopeIds.includes(r.empId));
+    const pending = state.requests.filter(r => r.status === 'pending' && inScope(r)).sort((a, b) => a.start.localeCompare(b.start));
+    const decided = state.requests.filter(r => r.status !== 'pending' && inScope(r)).sort((a, b) => (b.decidedAt || b.createdAt).localeCompare(a.decidedAt || a.createdAt));
+    return '<div class="seg">' +
+        '<button data-tab="pending" class="' + (ui.approvalsTab === 'pending' ? 'on' : '') + '">Pending (' + pending.length + ')</button>' +
+        '<button data-tab="decided" class="' + (ui.approvalsTab === 'decided' ? 'on' : '') + '">Decided (' + decided.length + ')</button>' +
+      '</div>' +
+      (ui.approvalsTab === 'pending'
+        ? (pending.length ? '<div class="stack">' + pending.map(r => approvalCard(r, false, u)).join('') + '</div>' : '<div class="card"><p class="empty">All caught up. No requests waiting.</p></div>')
+        : '<div class="card"><div class="table-wrap"><table><thead><tr><th>Ref</th><th>Employee</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Decided by</th><th>Note</th></tr></thead><tbody>' +
+            (decided.length ? decided.map(r => { const e = emp(r.empId); return '<tr><td class="mono">' + r.id + '</td><td><b>' + esc(e.name) + '</b><div class="faint mono" style="font-size:12px">' + e.id + '</div></td><td>' + leaveType(r.type).name + '</td><td class="num">' + fmtRange(r.start, r.end) + '</td><td class="num">' + r.days + '</td><td>' + statusPill(r.status) + '</td><td>' + (r.status === 'cancelled' ? '<span class="faint">Employee</span>' : decidedByName(r)) + '</td><td class="muted">' + (esc(r.note) || '<span class="faint">-</span>') + '</td></tr>'; }).join('') : '<tr><td colspan="8" class="empty">Nothing decided yet.</td></tr>') +
+          '</tbody></table></div></div>');
+  }
+
+  function calendarBody(scopeIds) {
+    const t = todayISO();
+    if (!ui.calMonth) ui.calMonth = t.slice(0, 7);
+    const first = fromISO(ui.calMonth + '-01');
+    const gridStart = addDays(ui.calMonth + '-01', -((first.getDay() + 6) % 7));
+    const countries = ui.calCountry === 'all' ? ['ID', 'MY'] : [ui.calCountry];
+    const reqs = state.requests.filter(r => (r.status === 'approved' || r.status === 'pending') && countries.includes(emp(r.empId).country) && (!scopeIds || scopeIds.includes(r.empId)));
+    let cells = '';
+    for (let i = 0; i < 42; i++) {
+      const d = addDays(gridStart, i);
+      const out = d.slice(0, 7) !== ui.calMonth;
+      const hols = countries.map(c => { const h = holidayOn(d, c); return h ? (countries.length > 1 ? c + ' · ' : '') + h.name : null; }).filter(Boolean);
+      const people = reqs.filter(r => isOn(r, d));
+      cells += '<div class="day' + (out ? ' out' : '') + (isWeekend(d) ? ' weekend' : '') + (d === t ? ' today' : '') + '"><span class="d num">' + fromISO(d).getDate() + '</span>' +
+        hols.map(h => '<span class="hol">' + esc(h) + '</span>').join('') +
+        people.map(r => { const e = emp(r.empId); return '<span class="who' + (r.status === 'pending' ? ' pend' : '') + '" title="' + esc(e.name) + ' · ' + leaveType(r.type).name + ' (' + r.status + ')">' + esc(e.name.split(' ')[0]) + ' · ' + r.type + '</span>'; }).join('') +
+      '</div>';
+    }
+    return '<div class="row" style="justify-content:space-between"><div class="seg">' + [['all', 'All countries'], ['ID', 'Indonesia'], ['MY', 'Malaysia']].map(([k, l]) => '<button data-cal-country="' + k + '" class="' + (ui.calCountry === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
+      '<div class="legend"><span><i></i>Approved</span><span><i class="pend"></i>Pending</span><span><i class="hol"></i>Public holiday</span></div></div>' +
+      '<div class="cal-wrap"><div class="cal">' + ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(x => '<div class="dow">' + x + '</div>').join('') + cells + '</div></div>';
+  }
+  const CAL_ACTIONS = '<button class="btn sm" data-action="cal-prev" aria-label="Previous month">Previous</button><button class="btn sm" data-action="cal-today">This month</button><button class="btn sm" data-action="cal-next" aria-label="Next month">Next</button>';
+  const calTitle = () => fmt((ui.calMonth || todayISO().slice(0, 7)) + '-01', { month: 'long', year: 'numeric' });
+
+  // ---------- leader views ----------
+  VIEWS['t-approvals'] = u => ({
+    eyebrow: 'My team · Approvals',
+    title: 'Team approvals',
+    sub: 'Leave requests from people who report directly to you. Approving deducts the working days from their balance. Rejecting needs a short reason they will see.',
+    body: approvalsBody(u, directReports(u.id).map(e => e.id))
+  });
+
+  VIEWS['t-team'] = u => {
+    const t = todayISO();
+    const team = directReports(u.id);
+    const offIds = whoOff(t, team.map(e => e.id)).map(x => x.e.id);
+    return {
+      eyebrow: 'My team · ' + team.length + ' direct ' + (team.length === 1 ? 'report' : 'reports'),
+      title: 'Team members',
+      sub: 'Your reporting line is set by People Ops. Ask them if someone is missing or should move to another leader.',
+      body: '<div class="card"><div class="table-wrap"><table><thead><tr><th>Member</th><th>Grade</th><th>Today</th><th>Annual left</th><th>Sick used</th><th>Next time off</th><th>Pending</th></tr></thead><tbody>' +
+        (team.length ? team.map(e => {
+          const al = balance(e, 'AL'), sl = balance(e, 'SL');
+          const next = state.requests.filter(r => r.empId === e.id && r.status === 'approved' && r.end >= t).sort((a, b) => a.start.localeCompare(b.start))[0];
+          const pend = state.requests.filter(r => r.empId === e.id && r.status === 'pending').length;
+          return '<tr><td><div class="row" style="flex-wrap:nowrap"><span class="avatar">' + initials(e.name) + '</span><div><b>' + esc(e.name) + '</b><div class="faint" style="font-size:13px">' + esc(e.title) + ' · ' + e.country + (e.role === 'leader' ? ' · Leader of ' + directReports(e.id).length : '') + '</div></div></div></td>' +
+            '<td class="num">' + e.grade + '</td>' +
+            '<td>' + (!e.active ? '<span class="pill inactive">Deactivated</span>' : offIds.includes(e.id) ? '<span class="pill pending">Off</span>' : '<span class="pill active">In</span>') + '</td>' +
+            '<td class="num">' + al.available + ' / ' + al.quota + '</td><td class="num">' + sl.used + '</td>' +
+            '<td class="num">' + (next ? leaveType(next.type).name + '<div class="faint">' + fmtRange(next.start, next.end) + '</div>' : '<span class="faint">-</span>') + '</td>' +
+            '<td>' + (pend ? '<button class="btn ghost sm" data-nav="t-approvals">' + pend + ' to review</button>' : '<span class="faint">-</span>') + '</td></tr>';
+        }).join('') : '<tr><td colspan="7" class="empty">No one reports to you yet.</td></tr>') +
+      '</tbody></table></div></div>'
+    };
+  };
+
+  VIEWS['t-calendar'] = u => ({
+    eyebrow: 'My team · Calendar',
+    title: calTitle(),
+    sub: 'You and your direct reports. Leave codes: AL annual, SL sick, SP special, MT maternity, UL unpaid.',
+    actions: CAL_ACTIONS,
+    body: calendarBody([u.id].concat(directReports(u.id).map(e => e.id)))
+  });
+
+  // ---------- admin views ----------
   VIEWS['a-overview'] = u => {
     const t = todayISO();
-    const pending = state.requests.filter(r => r.status === 'pending').sort((a, b) => a.start.localeCompare(b.start));
+    const pending = state.requests.filter(r => r.status === 'pending' && r.empId !== u.id).sort((a, b) => a.start.localeCompare(b.start));
+    const noLeader = pending.filter(r => !emp(r.empId).managerId);
     const off = whoOff(t);
     const week = new Set(state.requests.filter(r => r.status === 'approved' && r.start <= addDays(t, 7) && r.end > t).map(r => r.empId));
     const active = state.employees.filter(e => e.active).length;
+    const leaders = state.employees.filter(e => e.active && e.role === 'leader').length;
     const stat = (label, value, sub) => '<div class="card stat"><span class="label">' + label + '</span><div class="big num grad-text">' + value + '</div><div class="muted" style="font-size:13.5px;margin-top:6px">' + sub + '</div></div>';
     return {
       eyebrow: 'People Ops · ' + fmt(t, { weekday: 'long', day: 'numeric', month: 'long' }),
-      title: 'Attendance overview',
-      actions: '<button class="btn" data-action="add-emp">Create account</button><button class="btn primary" data-nav="a-approvals">Review approvals</button>',
+      title: 'Attendance dashboard',
+      actions: '<button class="btn" data-action="add-emp">Create account</button><button class="btn primary" data-nav="a-approvals">All approvals</button>',
       body: '<section class="grid-4">' +
-          stat('Waiting for approval', pending.length, 'oldest submitted ' + (pending.length ? fmt(pending.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0].createdAt) : '-')) +
+          stat('Waiting for approval', pending.length, noLeader.length + ' with no leader, People Ops only') +
           stat('Off today', off.length, 'approved leave only') +
           stat('Off in the next 7 days', week.size, 'people with approved leave') +
-          stat('Active accounts', active, state.employees.filter(e => !e.active).length + ' deactivated') +
+          stat('Active accounts', active, leaders + ' leaders · ' + state.employees.filter(e => !e.active).length + ' deactivated') +
         '</section>' +
         '<section class="split">' +
-          '<div class="stack"><div class="card-head" style="margin:0"><h3 style="font-size:20px">Waiting for you</h3><button class="btn ghost sm" data-nav="a-approvals">See all</button></div>' +
-            (pending.length ? pending.slice(0, 3).map(r => approvalCard(r, true)).join('') : '<div class="card"><p class="empty">All caught up. No requests waiting.</p></div>') +
+          '<div class="stack"><div class="card-head" style="margin:0"><h3 style="font-size:20px">Waiting across the company</h3><button class="btn ghost sm" data-nav="a-approvals">See all</button></div>' +
+            (pending.length ? pending.slice(0, 3).map(r => approvalCard(r, true, u)).join('') : '<div class="card"><p class="empty">All caught up. No requests waiting.</p></div>') +
           '</div>' +
           '<div class="stack">' +
             '<div class="card"><div class="card-head"><h3>Off today</h3><span class="faint">' + fmtShort(t) + '</span></div>' +
@@ -752,79 +897,67 @@ td.actions { white-space: nowrap; text-align: right; }
     };
   };
 
-  VIEWS['a-approvals'] = () => {
-    const pending = state.requests.filter(r => r.status === 'pending').sort((a, b) => a.start.localeCompare(b.start));
-    const decided = state.requests.filter(r => r.status !== 'pending').sort((a, b) => (b.decidedAt || b.createdAt).localeCompare(a.decidedAt || a.createdAt));
-    return {
-      eyebrow: 'People Ops · Approvals',
-      title: 'Leave approvals',
-      sub: 'Approving deducts the working days from the employee\'s balance. Rejecting needs a short reason the employee will see.',
-      body: '<div class="seg">' +
-          '<button data-tab="pending" class="' + (ui.approvalsTab === 'pending' ? 'on' : '') + '">Pending (' + pending.length + ')</button>' +
-          '<button data-tab="decided" class="' + (ui.approvalsTab === 'decided' ? 'on' : '') + '">Decided (' + decided.length + ')</button>' +
-        '</div>' +
-        (ui.approvalsTab === 'pending'
-          ? (pending.length ? '<div class="stack">' + pending.map(r => approvalCard(r, false)).join('') + '</div>' : '<div class="card"><p class="empty">All caught up. No requests waiting.</p></div>')
-          : '<div class="card"><div class="table-wrap"><table><thead><tr><th>Ref</th><th>Employee</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Note</th></tr></thead><tbody>' +
-              decided.map(r => { const e = emp(r.empId); return '<tr><td class="mono">' + r.id + '</td><td><b>' + esc(e.name) + '</b><div class="faint mono" style="font-size:12px">' + e.id + '</div></td><td>' + leaveType(r.type).name + '</td><td class="num">' + fmtRange(r.start, r.end) + '</td><td class="num">' + r.days + '</td><td>' + statusPill(r.status) + '</td><td class="muted">' + (esc(r.note) || '<span class="faint">-</span>') + '</td></tr>'; }).join('') +
-            '</tbody></table></div></div>')
-    };
-  };
+  VIEWS['a-approvals'] = u => ({
+    eyebrow: 'People Ops · Approvals',
+    title: 'All approvals',
+    sub: 'Every pending request in the company. Leaders normally approve their own reportees. As HR admin you can approve or reject any request except your own.',
+    body: approvalsBody(u, null)
+  });
 
   VIEWS['a-employees'] = u => {
     const q = ui.empQuery.trim().toLowerCase();
-    const list = state.employees.filter(e => !q || (e.name + ' ' + e.id + ' ' + e.department + ' ' + e.email).toLowerCase().includes(q));
+    const list = state.employees.filter(e => !q || (e.name + ' ' + e.id + ' ' + e.department + ' ' + e.email + ' ' + e.role).toLowerCase().includes(q));
     return {
       eyebrow: 'People Ops · Access',
       title: 'Employees & access',
-      sub: 'Create sign-in accounts for the attendance system. Each account gets a user ID and a one-time temporary password.',
+      sub: 'Create sign-in accounts and set each person\'s access level and leader. Each new account gets a user ID and a one-time temporary password.',
       actions: '<button class="btn primary" data-action="add-emp">Create account</button>',
       body: '<div class="note"><div><b>Email sign-in is not connected yet.</b> Share the user ID and temporary password with the employee directly, for example over Slack or in person. They set their own password the first time they sign in.</div></div>' +
-        '<div class="card"><div class="card-head"><label class="field" style="width:min(340px,100%)"><span class="faint" style="font-weight:500">Search</span><input class="input" id="emp-q" placeholder="Name, user ID or department" value="' + esc(ui.empQuery) + '"></label><span class="faint num">' + list.length + ' of ' + state.employees.length + '</span></div>' +
-        '<div class="table-wrap"><table><thead><tr><th>Employee</th><th>User ID</th><th>Country</th><th>Grade</th><th>Access</th><th>Annual left</th><th>Sick used</th><th>Status</th><th></th></tr></thead><tbody>' +
-          list.map(e => { const al = balance(e, 'AL'), sl = balance(e, 'SL'); return '<tr>' +
-            '<td><div class="row" style="flex-wrap:nowrap"><span class="avatar">' + initials(e.name) + '</span><div><b>' + esc(e.name) + '</b><div class="faint" style="font-size:13px">' + esc(e.title) + ' · ' + esc(e.department) + '</div></div></div></td>' +
+        '<div class="card"><div class="card-head"><label class="field" style="width:min(340px,100%)"><span class="faint" style="font-weight:500">Search</span><input class="input" id="emp-q" placeholder="Name, user ID, department or access" value="' + esc(ui.empQuery) + '"></label><span class="faint num">' + list.length + ' of ' + state.employees.length + '</span></div>' +
+        '<div class="table-wrap"><table><thead><tr><th>Employee</th><th>User ID</th><th>Access</th><th>Reports to</th><th>Grade</th><th>Annual left</th><th>Status</th><th></th></tr></thead><tbody>' +
+          list.map(e => { const al = balance(e, 'AL'), m = e.managerId && emp(e.managerId); return '<tr>' +
+            '<td><div class="row" style="flex-wrap:nowrap"><span class="avatar">' + initials(e.name) + '</span><div><b>' + esc(e.name) + '</b><div class="faint" style="font-size:13px">' + esc(e.title) + ' · ' + esc(e.department) + ' · ' + e.country + '</div></div></div></td>' +
             '<td class="mono">' + e.id + (e.mustChange ? '<div class="faint" style="font-size:11.5px;font-family:var(--font-body)">Temporary password</div>' : '') + '</td>' +
-            '<td>' + e.country + '</td><td class="num">' + e.grade + '</td>' +
-            '<td>' + (e.role === 'admin' ? '<span class="tag">HR admin</span>' : 'Employee') + '</td>' +
-            '<td class="num">' + al.available + ' / ' + al.quota + '</td><td class="num">' + sl.used + '</td>' +
+            '<td>' + (e.role === 'reportee' ? 'Reportee' : '<span class="tag">' + ROLE_LABEL[e.role] + '</span>') + (directReports(e.id).length ? '<div class="faint" style="font-size:12.5px">' + directReports(e.id).length + ' direct reports</div>' : '') + '</td>' +
+            '<td>' + (m ? esc(m.name) : '<span class="faint">No one</span>') + '</td>' +
+            '<td class="num">' + e.grade + '</td>' +
+            '<td class="num">' + al.available + ' / ' + al.quota + '</td>' +
             '<td>' + (e.active ? '<span class="pill active">Active</span>' : '<span class="pill inactive">Deactivated</span>') + '</td>' +
-            '<td class="actions"><button class="btn ghost sm" data-action="reset-pw" data-id="' + e.id + '">Reset password</button>' +
+            '<td class="actions"><button class="btn ghost sm" data-action="edit-emp" data-id="' + e.id + '">Edit</button><button class="btn ghost sm" data-action="reset-pw" data-id="' + e.id + '">Reset password</button>' +
               (e.id === u.id ? '' : '<button class="btn ghost sm" data-action="toggle-active" data-id="' + e.id + '">' + (e.active ? 'Deactivate' : 'Reactivate') + '</button>') + '</td>' +
           '</tr>'; }).join('') +
         '</tbody></table></div></div>'
     };
   };
 
-  VIEWS['a-calendar'] = () => {
-    const t = todayISO();
-    if (!ui.calMonth) ui.calMonth = t.slice(0, 7);
-    const first = fromISO(ui.calMonth + '-01');
-    const startOffset = (first.getDay() + 6) % 7;
-    const gridStart = addDays(ui.calMonth + '-01', -startOffset);
-    const countries = ui.calCountry === 'all' ? ['ID', 'MY'] : [ui.calCountry];
-    const reqs = state.requests.filter(r => (r.status === 'approved' || r.status === 'pending') && countries.includes(emp(r.empId).country));
-    let cells = '';
-    for (let i = 0; i < 42; i++) {
-      const d = addDays(gridStart, i);
-      const out = d.slice(0, 7) !== ui.calMonth;
-      const hols = countries.map(c => { const h = holidayOn(d, c); return h ? (countries.length > 1 ? c + ' · ' : '') + h.name : null; }).filter(Boolean);
-      const people = reqs.filter(r => isOn(r, d));
-      cells += '<div class="day' + (out ? ' out' : '') + (isWeekend(d) ? ' weekend' : '') + (d === t ? ' today' : '') + '"><span class="d num">' + fromISO(d).getDate() + '</span>' +
-        hols.map(h => '<span class="hol">' + esc(h) + '</span>').join('') +
-        people.map(r => { const e = emp(r.empId); return '<span class="who' + (r.status === 'pending' ? ' pend' : '') + '" title="' + esc(e.name) + ' · ' + leaveType(r.type).name + ' (' + r.status + ')">' + esc(e.name.split(' ')[0]) + ' · ' + r.type + '</span>'; }).join('') +
-      '</div>';
-    }
+  function orgNode(e) {
+    const kids = directReports(e.id);
+    return '<div class="org-item"><div class="org-node' + (kids.length ? ' leader' : '') + '" style="' + (e.active ? '' : 'opacity:.55') + '">' +
+      '<span class="avatar">' + initials(e.name) + '</span>' +
+      '<div class="grow"><b>' + esc(e.name) + '</b> ' + (e.role === 'reportee' ? '' : '<span class="tag">' + ROLE_LABEL[e.role] + '</span>') +
+        '<div class="faint" style="font-size:13px">' + esc(e.title) + ' · ' + e.grade + ' · ' + e.country + (kids.length ? ' · approves for ' + kids.length : '') + (e.active ? '' : ' · deactivated') + '</div></div>' +
+      '<label class="row" style="gap:8px;flex-wrap:nowrap"><span class="faint" style="font-size:13px">Reports to</span><select class="input" data-org="' + e.id + '" id="org-' + e.id + '" aria-label="Leader of ' + esc(e.name) + '">' + leaderOptions(e.id, e.managerId) + '</select></label>' +
+    '</div>' + (kids.length ? '<div class="org-children">' + kids.map(orgNode).join('') + '</div>' : '') + '</div>';
+  }
+
+  VIEWS['a-org'] = () => {
+    const roots = state.employees.filter(e => !e.managerId || !emp(e.managerId));
     return {
-      eyebrow: 'People Ops · Calendar',
-      title: fmt(ui.calMonth + '-01', { month: 'long', year: 'numeric' }),
-      sub: 'Who is off, by day. Leave codes: AL annual, SL sick, SP special, MT maternity, UL unpaid.',
-      actions: '<button class="btn sm" data-action="cal-prev" aria-label="Previous month">Previous</button><button class="btn sm" data-action="cal-today">This month</button><button class="btn sm" data-action="cal-next" aria-label="Next month">Next</button>',
-      body: '<div class="row" style="justify-content:space-between"><div class="seg">' + [['all', 'All countries'], ['ID', 'Indonesia'], ['MY', 'Malaysia']].map(([k, l]) => '<button data-cal-country="' + k + '" class="' + (ui.calCountry === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
-        '<div class="legend"><span><i></i>Approved</span><span><i class="pend"></i>Pending</span><span><i class="hol"></i>Public holiday</span></div></div>' +
-        '<div class="cal-wrap"><div class="cal">' + ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(x => '<div class="dow">' + x + '</div>').join('') + cells + '</div></div>'
+      eyebrow: 'People Ops · Reporting line',
+      title: 'Reporting line',
+      sub: 'Who reports to whom. A person\'s leader approves their leave, and People Ops can always approve too. Only leaders and HR admins can have reportees.',
+      body: '<div class="legend"><span><span class="tag">Leader</span>Approves leave for direct reports</span><span><span class="tag">HR admin</span>Approves anyone, manages accounts</span><span>Reportee: requests leave only</span></div>' +
+        '<div class="org">' + roots.map(orgNode).join('') + '</div>'
     };
   };
+
+  VIEWS['a-calendar'] = () => ({
+    eyebrow: 'People Ops · Calendar',
+    title: calTitle(),
+    sub: 'Who is off across the company, by day. Leave codes: AL annual, SL sick, SP special, MT maternity, UL unpaid.',
+    actions: CAL_ACTIONS,
+    body: calendarBody(null)
+  });
 
   VIEWS['a-policy'] = () => ({
     eyebrow: 'People Ops · Policy',
@@ -853,19 +986,23 @@ td.actions { white-space: nowrap; text-align: right; }
 
   // ---------- modals ----------
   function modalView(m) {
-    if (m.kind === 'add-emp') {
-      return '<div><div class="eyebrow">New account</div><h2 style="margin-top:8px">Create an attendance account</h2><p class="muted" style="margin-top:6px">We generate the user ID and a temporary password. Email sign-in comes later.</p></div>' +
-        '<form id="emp-form" class="stack" novalidate><div class="form-grid">' +
-          '<label class="field full"><span>Full name</span><input class="input" id="ne-name" placeholder="e.g. Putri Anggraini"></label>' +
-          '<label class="field full"><span>Work email <span class="faint" style="font-weight:400">(optional)</span></span><input class="input" type="email" id="ne-email" placeholder="name@getswing.app"><small>Saved on the profile for later. Not used for sign-in yet.</small></label>' +
-          '<label class="field"><span>Country</span><select class="input" id="ne-country"><option value="ID">Indonesia</option><option value="MY">Malaysia</option></select></label>' +
-          '<label class="field"><span>Department</span><select class="input" id="ne-dept">' + DEPARTMENTS.map(d => '<option>' + d + '</option>').join('') + '</select></label>' +
-          '<label class="field"><span>Job title</span><input class="input" id="ne-title" placeholder="e.g. Operations Associate"></label>' +
-          '<label class="field"><span>Grade</span><select class="input" id="ne-grade">' + GRADES.map(g => '<option>' + g + '</option>').join('') + '</select></label>' +
-          '<label class="field"><span>Join date</span><input class="input" type="date" id="ne-join" value="' + todayISO() + '"></label>' +
-          '<label class="field"><span>Access</span><select class="input" id="ne-role"><option value="employee">Employee</option><option value="admin">HR admin</option></select></label>' +
+    if (m.kind === 'add-emp' || m.kind === 'edit-emp') {
+      const editing = m.kind === 'edit-emp';
+      const e = editing ? emp(m.id) : { name: '', email: '', country: 'ID', department: 'Operations', title: '', grade: '1.1', joinDate: todayISO(), role: 'reportee', managerId: '' };
+      const sel = (v, cur) => v === cur ? ' selected' : '';
+      return '<div><div class="eyebrow">' + (editing ? 'Edit · ' + e.id : 'New account') + '</div><h2 style="margin-top:8px">' + (editing ? esc(e.name) : 'Create an attendance account') + '</h2><p class="muted" style="margin-top:6px">' + (editing ? 'Change job details, access level and leader. The user ID stays the same.' : 'We generate the user ID and a temporary password. Email sign-in comes later.') + '</p></div>' +
+        '<form id="emp-form" class="stack" novalidate data-edit="' + (editing ? e.id : '') + '"><div class="form-grid">' +
+          '<label class="field full"><span>Full name</span><input class="input" id="ne-name" placeholder="e.g. Putri Anggraini" value="' + esc(e.name) + '"></label>' +
+          '<label class="field full"><span>Work email <span class="faint" style="font-weight:400">(optional)</span></span><input class="input" type="email" id="ne-email" placeholder="name@getswing.app" value="' + esc(e.email) + '"><small>Saved on the profile for later. Not used for sign-in yet.</small></label>' +
+          '<label class="field"><span>Country</span><select class="input" id="ne-country"' + (editing ? ' disabled' : '') + '>' + Object.keys(COUNTRIES).map(c => '<option value="' + c + '"' + sel(c, e.country) + '>' + COUNTRIES[c] + '</option>').join('') + '</select>' + (editing ? '<small>Country is part of the user ID and cannot change.</small>' : '') + '</label>' +
+          '<label class="field"><span>Department</span><select class="input" id="ne-dept">' + DEPARTMENTS.map(d => '<option' + sel(d, e.department) + '>' + d + '</option>').join('') + '</select></label>' +
+          '<label class="field"><span>Job title</span><input class="input" id="ne-title" placeholder="e.g. Operations Associate" value="' + esc(e.title) + '"></label>' +
+          '<label class="field"><span>Grade</span><select class="input" id="ne-grade">' + GRADES.map(g => '<option' + sel(g, e.grade) + '>' + g + '</option>').join('') + '</select></label>' +
+          (editing ? '' : '<label class="field"><span>Join date</span><input class="input" type="date" id="ne-join" value="' + e.joinDate + '"></label>') +
+          '<label class="field"><span>Access</span><select class="input" id="ne-role">' + ['reportee', 'leader', 'admin'].map(r => '<option value="' + r + '"' + sel(r, e.role) + '>' + ROLE_LABEL[r] + '</option>').join('') + '</select><small>Leaders approve leave for their direct reports. HR admins approve anyone and manage accounts.</small></label>' +
+          '<label class="field full"><span>Reports to</span><select class="input" id="ne-manager">' + leaderOptions(editing ? e.id : null, e.managerId) + '</select><small>This person approves their leave. People Ops can always approve too.</small></label>' +
         '</div><p class="faint" id="ne-preview" style="font-size:13.5px"></p><p class="error-text" id="ne-error" hidden></p>' +
-        '<div class="modal-actions"><button class="btn" type="button" data-action="close-modal">Cancel</button><button class="btn primary" type="submit">Create account</button></div></form>';
+        '<div class="modal-actions"><button class="btn" type="button" data-action="close-modal">Cancel</button><button class="btn primary" type="submit">' + (editing ? 'Save changes' : 'Create account') + '</button></div></form>';
     }
     if (m.kind === 'creds') {
       const e = emp(m.id);
@@ -885,6 +1022,7 @@ td.actions { white-space: nowrap; text-align: right; }
     if (m.kind === 'confirm-deactivate') {
       const e = emp(m.id);
       return '<div><div class="eyebrow">Deactivate</div><h2 style="margin-top:8px">Deactivate ' + esc(e.name) + '?</h2><p class="muted" style="margin-top:6px">They can no longer sign in. Their leave history stays. You can reactivate the account any time.</p></div>' +
+        (directReports(e.id).filter(x => x.active).length ? '<div class="note warn"><div><b>' + directReports(e.id).filter(x => x.active).length + ' people report to ' + esc(e.name.split(' ')[0]) + '.</b> Their leave requests go to People Ops until you give them a new leader in Reporting line.</div></div>' : '') +
         '<div class="modal-actions"><button class="btn" data-action="close-modal">Cancel</button><button class="btn danger" data-action="deactivate-yes" data-id="' + e.id + '">Deactivate</button></div>';
     }
     if (m.kind === 'reject') {
@@ -961,7 +1099,7 @@ td.actions { white-space: nowrap; text-align: right; }
         state.seq.req++;
         const id = 'LV-' + String(state.seq.req).padStart(4, '0');
         state.requests.push({ id, empId: u.id, type: d.type, start: d.start, end: d.end, half: d.half, days: countDays(d.start, d.end, u.country, d.half).days, reason: d.reason.trim(), attachment: d.attachment, status: 'pending', createdAt: todayISO(), decidedBy: null, decidedAt: null, note: '' });
-        save(); ui.draft = null; ui.view = 'mine'; ui.reqFilter = 'all'; render(); toast('Request ' + id + ' sent to People Ops');
+        save(); ui.draft = null; ui.view = 'mine'; ui.reqFilter = 'all'; render(); toast('Request ' + id + ' sent to ' + approverLabel(u).replace(' or People Ops', ''));
       });
       sync();
     }
@@ -991,17 +1129,28 @@ td.actions { white-space: nowrap; text-align: right; }
 
     const ef = document.getElementById('emp-form');
     if (ef) {
-      const preview = () => { document.getElementById('ne-preview').textContent = 'User ID will be ' + nextEmpId(document.getElementById('ne-country').value) + '.'; };
+      const editId = ef.dataset.edit;
+      const preview = () => { if (!editId) document.getElementById('ne-preview').textContent = 'User ID will be ' + nextEmpId(document.getElementById('ne-country').value) + '.'; };
       document.getElementById('ne-country').addEventListener('change', preview); preview();
       ef.addEventListener('submit', ev => {
         ev.preventDefault();
         const name = document.getElementById('ne-name').value.trim(), email = document.getElementById('ne-email').value.trim();
+        const role = document.getElementById('ne-role').value, managerId = document.getElementById('ne-manager').value || null;
         if (name.length < 2) return showError('ne-error', 'Enter the employee\'s full name.');
         if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return showError('ne-error', 'That email does not look right. Leave it empty or fix it.');
-        if (email && state.employees.some(e => e.email.toLowerCase() === email.toLowerCase())) return showError('ne-error', email + ' already belongs to another account.');
+        if (email && state.employees.some(e => e.id !== editId && e.email.toLowerCase() === email.toLowerCase())) return showError('ne-error', email + ' already belongs to another account.');
+        const fields = { name, email, department: document.getElementById('ne-dept').value, title: document.getElementById('ne-title').value.trim() || 'Employee', grade: document.getElementById('ne-grade').value, role, managerId };
+        if (editId) {
+          const e = emp(editId);
+          const reports = directReports(editId).length;
+          if (role === 'reportee' && reports) return showError('ne-error', e.name.split(' ')[0] + ' has ' + reports + ' direct reports. Move them to another leader in Reporting line before changing access to Reportee.');
+          if (editId === u.id && role !== 'admin') return showError('ne-error', 'You cannot remove your own HR admin access. Ask another HR admin.');
+          Object.assign(e, fields); save(); ui.modal = null; render(); toast(e.name + ' updated');
+          return;
+        }
         const country = document.getElementById('ne-country').value;
         const password = generatePassword();
-        const e = { id: nextEmpId(country), name, email, country, department: document.getElementById('ne-dept').value, title: document.getElementById('ne-title').value.trim() || 'Employee', grade: document.getElementById('ne-grade').value, role: document.getElementById('ne-role').value, joinDate: document.getElementById('ne-join').value || todayISO(), password, mustChange: true, active: true };
+        const e = Object.assign({ id: nextEmpId(country), country, joinDate: document.getElementById('ne-join').value || todayISO(), password, mustChange: true, active: true }, fields);
         state.employees.push(e); save();
         openModal({ kind: 'creds', id: e.id, password });
       });
@@ -1044,8 +1193,9 @@ td.actions { white-space: nowrap; text-align: right; }
       case 'cancel-ask': ui.confirmCancel = id; render(); break;
       case 'cancel-no': ui.confirmCancel = null; render(); break;
       case 'cancel-yes': { const r = state.requests.find(x => x.id === id); r.status = 'cancelled'; ui.confirmCancel = null; save(); render(); toast(r.id + ' cancelled'); break; }
-      case 'approve': { const r = state.requests.find(x => x.id === id); Object.assign(r, { status: 'approved', decidedBy: u.id, decidedAt: todayISO(), note: '' }); save(); render(); toast(r.id + ' approved for ' + emp(r.empId).name); break; }
-      case 'reject': openModal({ kind: 'reject', id }); break;
+      case 'approve': { const r = state.requests.find(x => x.id === id); if (!canApprove(u, r)) { toast('Only ' + approverLabel(emp(r.empId)) + ' can approve this request'); break; } Object.assign(r, { status: 'approved', decidedBy: u.id, decidedAt: todayISO(), note: '' }); save(); render(); toast(r.id + ' approved for ' + emp(r.empId).name); break; }
+      case 'reject': { const r = state.requests.find(x => x.id === id); if (canApprove(u, r)) openModal({ kind: 'reject', id }); break; }
+      case 'edit-emp': openModal({ kind: 'edit-emp', id }); break;
       case 'add-emp': openModal({ kind: 'add-emp' }); break;
       case 'close-modal': closeModal(); break;
       case 'copy': copy(a.dataset.text, a); break;
@@ -1057,6 +1207,15 @@ td.actions { white-space: nowrap; text-align: right; }
       case 'cal-prev': case 'cal-next': { const d = fromISO(ui.calMonth + '-01'); d.setMonth(d.getMonth() + (a.dataset.action === 'cal-next' ? 1 : -1)); ui.calMonth = toISO(d).slice(0, 7); render(); break; }
       case 'cal-today': ui.calMonth = todayISO().slice(0, 7); render(); break;
     }
+  });
+
+  app.addEventListener('change', ev => {
+    const sel = ev.target.closest('select[data-org]');
+    if (!sel) return;
+    const e = emp(sel.dataset.org), managerId = sel.value || null;
+    if (managerId && (managerId === e.id || isBelow(managerId, e.id))) { toast('That would put ' + e.name + ' under their own team. Pick someone else.'); render(); return; }
+    e.managerId = managerId; save(); render();
+    toast(managerId ? e.name + ' now reports to ' + emp(managerId).name : e.name + ' is now at the top of the line');
   });
 
   document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && ui.modal) closeModal(); });
