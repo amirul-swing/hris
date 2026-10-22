@@ -8,25 +8,30 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>
-/* Layout: fixed sidebar + scrolling workspace; Swing deck language (gradient hero, lavender highlight cards, letter-spaced eyebrows) */
+/* Layout: fixed sidebar + scrolling workspace. Monochrome Swing: black on white, Swing purple as the only accent. */
 :root {
-  --bg: #F7F4FE;
+  --bg: #FFFFFF;
   --surface: #FFFFFF;
-  --surface-2: #F5EFFF;
-  --line: #ECE6F7;
-  --line-strong: #D9C8FA;
-  --ink: #16122C;
-  --muted: #5F5A74;
-  --faint: #8D88A2;
+  --surface-2: #F5F5F6;
+  --line: #E7E7EA;
+  --line-strong: #CDCDD3;
+  --ink: #0B0B0F;
+  --on-ink: #FFFFFF;
+  --muted: #55555E;
+  --faint: #8B8B94;
   --accent: #6A1DE4;
-  --accent-ink: #FFFFFF;
-  --magenta: #D615CF;
-  --grad: linear-gradient(118deg, #5A14E0 0%, #9A12DC 55%, #E013D0 100%);
-  --ok: #0F7A57; --ok-bg: #E3F5EC;
-  --warn: #8E5300; --warn-bg: #FFF1D9;
-  --bad: #BB2439; --bad-bg: #FDE8EB;
-  --shadow: 0 1px 2px rgba(45, 20, 100, .05), 0 10px 28px rgba(70, 25, 150, .07);
-  --overlay: rgba(22, 18, 44, .45);
+  --accent-soft: #F3EEFF;
+  --accent-line: #D9C8FA;
+  --hero: #0B0B0F;
+  --hero-ink: #FFFFFF;
+  --hero-muted: rgba(255,255,255,.72);
+  --hero-line: rgba(255,255,255,.16);
+  --hero-glow: rgba(106, 29, 228, .55);
+  --ok: #0F7A57; --ok-bg: #E6F4EE;
+  --warn: #8A5300; --warn-bg: #FFF3DC;
+  --bad: #B3253A; --bad-bg: #FCE9EC;
+  --shadow: 0 1px 2px rgba(11, 11, 15, .04), 0 6px 20px rgba(11, 11, 15, .05);
+  --overlay: rgba(11, 11, 15, .5);
   --font-display: "Hanken Grotesk", "Segoe UI", system-ui, sans-serif;
   --font-body: "Karla", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -35,18 +40,22 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0E0B1C; --surface: #17132A; --surface-2: #211839; --line: #2A2345; --line-strong: #4B3A80;
-    --ink: #F2EFFB; --muted: #B4AECB; --faint: #807A9A; --accent: #B78EFF; --accent-ink: #16122C; --magenta: #F270E8;
+    --bg: #0B0B0F; --surface: #131317; --surface-2: #1B1B21; --line: #26262D; --line-strong: #3A3A44;
+    --ink: #F4F4F6; --on-ink: #0B0B0F; --muted: #B0B0BA; --faint: #7C7C87;
+    --accent: #B794FF; --accent-soft: #1F1830; --accent-line: #4A3A7A;
+    --hero: #131317; --hero-glow: rgba(140, 80, 255, .45);
     --ok: #55D6A5; --ok-bg: #11302A; --warn: #F3B85E; --warn-bg: #33270F; --bad: #FF8494; --bad-bg: #3A1821;
-    --shadow: 0 1px 2px rgba(0,0,0,.3); --overlay: rgba(5, 3, 14, .7);
+    --shadow: 0 1px 2px rgba(0,0,0,.4); --overlay: rgba(0, 0, 0, .7);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0E0B1C; --surface: #17132A; --surface-2: #211839; --line: #2A2345; --line-strong: #4B3A80;
-  --ink: #F2EFFB; --muted: #B4AECB; --faint: #807A9A; --accent: #B78EFF; --accent-ink: #16122C; --magenta: #F270E8;
+  --bg: #0B0B0F; --surface: #131317; --surface-2: #1B1B21; --line: #26262D; --line-strong: #3A3A44;
+  --ink: #F4F4F6; --on-ink: #0B0B0F; --muted: #B0B0BA; --faint: #7C7C87;
+  --accent: #B794FF; --accent-soft: #1F1830; --accent-line: #4A3A7A;
+  --hero: #131317; --hero-glow: rgba(140, 80, 255, .45);
   --ok: #55D6A5; --ok-bg: #11302A; --warn: #F3B85E; --warn-bg: #33270F; --bad: #FF8494; --bad-bg: #3A1821;
-  --shadow: 0 1px 2px rgba(0,0,0,.3); --overlay: rgba(5, 3, 14, .7);
+  --shadow: 0 1px 2px rgba(0,0,0,.4); --overlay: rgba(0, 0, 0, .7);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -57,55 +66,55 @@ p { margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
 .num { font-variant-numeric: tabular-nums; }
-.mono { font-family: var(--font-mono); font-size: .92em; }
+.mono { font-family: var(--font-mono); font-size: .9em; }
 
 .eyebrow { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 11.5px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); }
 .eyebrow::before { content: ""; width: 22px; height: 2px; background: currentColor; border-radius: 2px; }
 .label { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
 .muted { color: var(--muted); }
 .faint { color: var(--faint); }
-.grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.accent { color: var(--accent); }
 
-/* Logo */
-.logo { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: -0.03em; color: var(--accent); }
-.logo svg { width: 24px; height: 24px; }
-.logo.on-grad { color: #fff; }
+.logo { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: -0.03em; color: var(--ink); }
+.logo svg { width: 24px; height: 24px; color: var(--accent); }
+.logo.on-hero { color: var(--hero-ink); }
+.logo.on-hero svg { color: var(--hero-ink); }
 
-/* Buttons */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: 999px; padding: 9px 18px; font-family: var(--font-display); font-weight: 700; font-size: 14px; line-height: 1.2; background: var(--surface); color: var(--ink); border-color: var(--line-strong); transition: transform .12s ease, box-shadow .12s ease, background .12s ease; white-space: nowrap; }
-.btn:hover { background: var(--surface-2); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line-strong); border-radius: 999px; padding: 9px 18px; font-family: var(--font-display); font-weight: 700; font-size: 14px; line-height: 1.2; background: var(--surface); color: var(--ink); transition: background .12s ease, border-color .12s ease, color .12s ease; white-space: nowrap; }
+.btn:hover { border-color: var(--ink); }
 .btn:active { transform: translateY(1px); }
-.btn.primary { background: var(--grad); color: #fff; border-color: transparent; box-shadow: 0 6px 16px rgba(120, 20, 220, .25); }
-.btn.primary:hover { filter: brightness(1.06); }
+.btn.primary { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.btn.primary:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn.danger { color: var(--bad); border-color: var(--bad-bg); background: var(--bad-bg); }
 .btn.ok { color: var(--ok); border-color: var(--ok-bg); background: var(--ok-bg); }
 .btn.ghost { border-color: transparent; background: transparent; color: var(--accent); padding-inline: 10px; }
-.btn.ghost:hover { background: var(--surface-2); }
+.btn.ghost:hover { background: var(--accent-soft); }
 .btn.sm { padding: 6px 12px; font-size: 13px; }
-.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
 
-/* Forms */
 .field { display: grid; gap: 6px; min-width: 0; }
 .field > span { font-weight: 600; font-size: 13.5px; }
 .field small { color: var(--faint); font-size: 12.5px; }
-.input, select.input, textarea.input { width: 100%; border: 1px solid var(--line-strong); background: var(--surface); border-radius: var(--radius-sm); padding: 10px 12px; min-height: 42px; }
+.input { width: 100%; border: 1px solid var(--line-strong); background: var(--surface); border-radius: var(--radius-sm); padding: 10px 12px; min-height: 42px; }
 textarea.input { min-height: 84px; resize: vertical; }
-.input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.input.sm { min-height: 34px; padding: 5px 8px; font-size: 13.5px; border-radius: 8px; }
+.input.missing { border-color: var(--warn); background: var(--warn-bg); }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .form-grid .full { grid-column: 1 / -1; }
 .form-grid.hol-grid { grid-template-columns: minmax(0, 180px) minmax(0, 1fr) auto; align-items: end; }
-[hidden] { display: none !important; }
 .error-text { color: var(--bad); font-size: 13.5px; font-weight: 600; }
 .seg { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); gap: 2px; flex-wrap: wrap; }
 .seg button { border: 0; background: transparent; border-radius: 999px; padding: 6px 14px; font-weight: 600; font-size: 13.5px; color: var(--muted); }
-.seg button.on { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+.seg button.on { background: var(--ink); color: var(--on-ink); }
 
-/* Cards */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; min-width: 0; }
-.card.hl { background: var(--surface-2); border-color: var(--line-strong); box-shadow: none; }
-.card.grad { background: var(--grad); color: #fff; border: 0; }
-.card.grad .label, .card.grad .muted { color: rgba(255,255,255,.85); }
+.card.hl { background: var(--accent-soft); border-color: var(--accent-line); box-shadow: none; }
+.card.dark { background: var(--hero); color: var(--hero-ink); border: 0; background-image: radial-gradient(90% 70% at 100% 100%, var(--hero-glow), transparent 65%); }
+.card.dark .label { color: var(--hero-ink); opacity: .8; }
+.card.dark .muted { color: var(--hero-muted); }
 .card h3 { font-size: 18px; }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
 .stack { display: grid; gap: 18px; }
@@ -114,155 +123,151 @@ textarea.input { min-height: 84px; resize: vertical; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .split { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 18px; align-items: start; }
 
-/* Pills */
 .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
 .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .pill.pending { color: var(--warn); background: var(--warn-bg); }
 .pill.approved, .pill.active { color: var(--ok); background: var(--ok-bg); }
 .pill.rejected, .pill.inactive { color: var(--bad); background: var(--bad-bg); }
 .pill.cancelled { color: var(--faint); background: var(--surface-2); }
-.tag { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 6px; font-size: 12px; font-weight: 700; background: var(--surface-2); color: var(--accent); border: 1px solid var(--line-strong); white-space: nowrap; }
+.tag { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 6px; font-size: 12px; font-weight: 700; background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-line); white-space: nowrap; }
+.tag.plain { background: var(--surface-2); color: var(--muted); border-color: var(--line); }
 
-/* Tables */
 .table-wrap { overflow-x: auto; margin-inline: -4px; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
-th { text-align: left; font-family: var(--font-display); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; padding: 10px 12px; border-bottom: 1.5px solid var(--line-strong); white-space: nowrap; }
+th { text-align: left; font-family: var(--font-display); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); font-weight: 700; padding: 10px 12px; border-bottom: 1.5px solid var(--ink); white-space: nowrap; }
 td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
 tr:last-child td { border-bottom: 0; }
 td.actions { white-space: nowrap; text-align: right; }
+td .input.sm { width: auto; min-width: 140px; }
 
 /* Login */
-.login { min-height: 100%; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
-.login-hero { background: var(--grad); color: #fff; padding: 48px clamp(24px, 5vw, 72px); display: flex; flex-direction: column; justify-content: space-between; gap: 40px; }
-.login-hero .eyebrow { color: rgba(255,255,255,.9); }
+.login { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+.login-hero { position: relative; overflow: hidden; background: var(--hero); color: var(--hero-ink); padding: 48px clamp(24px, 5vw, 72px); display: flex; flex-direction: column; justify-content: space-between; gap: 40px; background-image: radial-gradient(80% 60% at 100% 100%, var(--hero-glow), transparent 70%); }
+.login-hero .mark { position: absolute; right: -90px; top: -60px; width: 420px; height: 420px; color: var(--hero-ink); opacity: .06; pointer-events: none; }
+.login-hero .eyebrow { color: var(--hero-ink); opacity: .85; }
 .login-hero h1 { font-size: clamp(36px, 5vw, 60px); line-height: 1.02; font-weight: 800; margin-block: 18px 16px; }
-.login-hero p { font-size: 17px; max-width: 44ch; color: rgba(255,255,255,.9); }
-.hero-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.hero-cards div { border: 1px solid rgba(255,255,255,.28); background: rgba(255,255,255,.1); border-radius: 14px; padding: 14px; font-size: 13.5px; }
-.hero-cards strong { display: block; font-family: var(--font-display); font-size: 16px; margin-top: 4px; }
+.login-hero h1 em { font-style: normal; color: #B794FF; }
+.login-hero p { font-size: 17px; max-width: 46ch; color: var(--hero-muted); }
+.hero-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; position: relative; }
+.hero-cards div { border: 1px solid var(--hero-line); background: rgba(255,255,255,.04); border-radius: 14px; padding: 14px; font-size: 13.5px; color: var(--hero-muted); }
+.hero-cards strong { display: block; font-family: var(--font-display); font-size: 16px; margin-top: 4px; color: var(--hero-ink); }
 .login-panel { display: grid; place-items: center; padding: 40px 24px; }
 .login-box { width: min(420px, 100%); display: grid; gap: 22px; }
 .login-box h2 { font-size: 30px; }
-.demo-list { display: grid; gap: 8px; }
-.demo { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 14px; }
-.demo:hover { border-color: var(--line-strong); background: var(--surface-2); }
-.demo b { font-family: var(--font-display); display: block; }
 .pw-wrap { position: relative; }
 .pw-wrap .input { padding-right: 70px; }
 .pw-wrap button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); }
 
 /* Shell */
 .shell { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: 100%; }
-.side { background: var(--surface); border-right: 1px solid var(--line); padding: 24px 16px; display: flex; flex-direction: column; gap: 24px; position: sticky; top: 0; height: 100vh; }
+.side { background: var(--surface); border-right: 1px solid var(--line); padding: 24px 16px; display: flex; flex-direction: column; gap: 22px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 .side-brand { display: grid; gap: 6px; padding-inline: 8px; }
 .side-brand small { font-family: var(--font-display); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); font-weight: 700; }
-.nav { display: grid; gap: 4px; }
-.nav button { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 0; background: transparent; text-align: left; padding: 10px 12px; border-radius: 10px; font-weight: 600; color: var(--muted); }
-.nav button:hover { background: var(--surface-2); color: var(--ink); }
-.nav button.on { background: var(--surface-2); color: var(--accent); box-shadow: inset 0 0 0 1px var(--line-strong); }
-.nav-group { display: grid; gap: 4px; }
+.nav { display: grid; }
+.nav-group { display: grid; gap: 2px; }
 .nav-group + .nav-group { margin-top: 14px; }
 .nav-label { font-family: var(--font-display); font-size: 10.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); padding: 0 12px 4px; }
-.org { display: grid; gap: 10px; }
-.org > *, .org-children > *, .org-item { min-width: 0; }
-.org-children { display: grid; gap: 10px; margin-left: 22px; padding-left: 18px; border-left: 2px solid var(--line-strong); }
-.org-node { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow); }
-.org-node.leader { border-color: var(--line-strong); background: var(--surface-2); box-shadow: none; }
-.org-node .grow { flex: 1; min-width: 160px; }
-.org-node b { font-family: var(--font-display); }
-.org-node select { width: auto; max-width: 100%; min-height: 36px; padding: 6px 10px; font-size: 13.5px; }
-.nav .count { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--grad); color: #fff; font-size: 12px; font-weight: 700; text-align: center; }
+.nav button { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 0; background: transparent; text-align: left; padding: 9px 12px; border-radius: 10px; font-weight: 600; color: var(--muted); }
+.nav button:hover { background: var(--surface-2); color: var(--ink); }
+.nav button.on { background: var(--ink); color: var(--on-ink); }
+.nav .count { min-width: 22px; padding: 1px 7px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; text-align: center; }
 .side-foot { margin-top: auto; display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 16px; }
 .me { display: flex; gap: 10px; align-items: center; padding-inline: 4px; min-width: 0; }
 .me div { min-width: 0; }
 .me b { display: block; font-family: var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.avatar { width: 36px; height: 36px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--grad); color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 13px; }
+.avatar { width: 36px; height: 36px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--on-ink); font-family: var(--font-display); font-weight: 700; font-size: 13px; }
+.avatar.leader { background: var(--accent); color: #fff; }
 .avatar.lg { width: 44px; height: 44px; font-size: 15px; }
 .main { padding: 32px clamp(16px, 4vw, 44px) 64px; display: grid; gap: 24px; align-content: start; min-width: 0; }
 .page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
 .page-head h1 { font-size: clamp(28px, 3.4vw, 40px); font-weight: 800; margin-top: 8px; }
-.page-head p { color: var(--muted); margin-top: 6px; max-width: 64ch; }
+.page-head p { color: var(--muted); margin-top: 6px; max-width: 68ch; }
 
-/* Balance tiles */
-.balance .big { font-family: var(--font-display); font-weight: 800; font-size: 44px; line-height: 1; margin-top: 12px; }
-.balance .of { color: var(--muted); font-size: 14px; margin-top: 6px; }
-.meter { height: 8px; border-radius: 999px; background: var(--surface-2); margin-top: 16px; overflow: hidden; display: flex; border: 1px solid var(--line); }
-.meter i { display: block; height: 100%; }
-.meter .used { background: var(--grad); }
-.meter .pend { background: repeating-linear-gradient(45deg, var(--line-strong) 0 4px, transparent 4px 8px); }
-.balance .meta { display: flex; gap: 14px; font-size: 13px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
-.stat .big { font-family: var(--font-display); font-weight: 800; font-size: 40px; line-height: 1; margin-top: 10px; }
+/* Tiles */
+.tile .big { font-family: var(--font-display); font-weight: 800; font-size: 44px; line-height: 1; margin-top: 12px; }
+.tile .big.accent { color: var(--accent); }
+.tile .of { color: var(--muted); font-size: 14px; margin-top: 6px; }
+.tile .meta { display: flex; gap: 6px 14px; font-size: 13px; color: var(--muted); margin-top: 12px; flex-wrap: wrap; }
+.dots { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 14px; }
+.dots i { width: 10px; height: 10px; border-radius: 3px; background: var(--line); }
+.dots i.avail { background: var(--accent); }
+.dots i.used { background: var(--ink); }
+.dots i.pend { background: transparent; border: 1.5px dashed var(--accent); }
 
-/* Lists */
 .list { display: grid; }
 .list-item { display: flex; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); min-width: 0; }
 .list-item:last-child { border-bottom: 0; padding-bottom: 0; }
 .list-item:first-child { padding-top: 0; }
 .list-item .grow { flex: 1; min-width: 0; }
 .list-item b { font-family: var(--font-display); }
-.date-chip { flex: none; width: 52px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface-2); text-align: center; padding: 6px 0; line-height: 1.1; }
-.date-chip b { display: block; font-size: 20px; color: var(--accent); }
-.date-chip small { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.date-chip { flex: none; width: 52px; border-radius: 12px; border: 1px solid var(--line-strong); text-align: center; padding: 6px 0; line-height: 1.1; }
+.date-chip b { display: block; font-size: 20px; color: var(--ink); }
+.date-chip small { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
 .empty { color: var(--faint); padding: 18px 0; text-align: center; }
 
-/* Approvals */
 .approval { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: start; }
 .approval .who { display: flex; gap: 12px; align-items: center; }
 .approval .facts { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 14px; font-size: 14px; }
 .approval .facts div { display: grid; }
 .approval .facts small { color: var(--faint); font-size: 12px; font-weight: 600; }
-.approval blockquote { margin: 14px 0 0; padding: 10px 14px; border-radius: 10px; background: var(--surface-2); color: var(--ink); font-size: 14px; }
+.approval blockquote { margin: 14px 0 0; padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--surface-2); border-radius: 0 10px 10px 0; font-size: 14px; }
 .approval .btns { display: grid; gap: 8px; }
 
-/* Notes and banners */
-.note { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line-strong); font-size: 14px; }
+.note { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; background: var(--accent-soft); border: 1px solid var(--accent-line); font-size: 14px; }
 .note.warn { background: var(--warn-bg); border-color: transparent; color: var(--warn); }
-.note.bad { background: var(--bad-bg); border-color: transparent; color: var(--bad); }
 .note b { font-family: var(--font-display); }
 
-/* Summary panel */
 .summary { position: sticky; top: 24px; }
 .summary dl { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; margin: 16px 0 0; font-size: 14px; }
-.summary dt { color: rgba(255,255,255,.8); }
+.summary dt { color: var(--hero-muted); }
 .summary dd { margin: 0; text-align: right; font-weight: 700; }
 .summary .days { font-family: var(--font-display); font-size: 56px; font-weight: 800; line-height: 1; margin-top: 10px; }
 .skipped { margin-top: 14px; display: grid; gap: 6px; font-size: 13px; }
-.skipped span { display: flex; justify-content: space-between; gap: 10px; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,.14); }
+.skipped span { display: flex; justify-content: space-between; gap: 10px; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,.08); }
 
-/* Calendar */
 .cal-wrap { overflow-x: auto; }
 .cal { display: grid; grid-template-columns: repeat(7, minmax(110px, 1fr)); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; min-width: 770px; }
-.cal .dow { background: var(--surface-2); padding: 8px 10px; font-family: var(--font-display); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.cal .dow { background: var(--ink); color: var(--on-ink); padding: 8px 10px; font-family: var(--font-display); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; }
 .cal .day { min-height: 108px; padding: 8px; border-top: 1px solid var(--line); border-left: 1px solid var(--line); display: grid; gap: 4px; align-content: start; background: var(--surface); }
 .cal .day:nth-child(7n+1) { border-left: 0; }
 .cal .day.out { background: var(--bg); }
 .cal .day.out .d { color: var(--faint); }
-.cal .day.weekend { background: color-mix(in srgb, var(--surface-2) 55%, var(--surface)); }
-.cal .day.today .d { background: var(--grad); color: #fff; border-radius: 999px; padding: 0 7px; justify-self: start; }
+.cal .day.weekend { background: var(--surface-2); }
+.cal .day.today .d { background: var(--accent); color: #fff; border-radius: 999px; padding: 0 7px; justify-self: start; }
 .cal .d { font-family: var(--font-display); font-weight: 700; font-size: 14px; }
-.cal .hol { font-size: 11.5px; font-weight: 700; color: var(--magenta); line-height: 1.25; }
-.cal .who { font-size: 12px; padding: 2px 7px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cal .who.pend { background: transparent; border-style: dashed; color: var(--muted); }
-.legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.cal .hol { font-size: 11.5px; font-weight: 700; color: var(--accent); line-height: 1.25; }
+.cal .who { font-size: 12px; padding: 2px 7px; border-radius: 6px; background: var(--ink); color: var(--on-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal .who.pend { background: transparent; color: var(--muted); border: 1px dashed var(--line-strong); }
+.legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--muted); align-items: center; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
-.legend i { width: 14px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid var(--line-strong); background: var(--surface-2); }
-.legend i.pend { border-style: dashed; background: transparent; }
-.legend i.hol { background: var(--magenta); border-color: var(--magenta); }
+.legend i { width: 14px; height: 10px; border-radius: 3px; display: inline-block; background: var(--ink); }
+.legend i.pend { border: 1px dashed var(--line-strong); background: transparent; }
+.legend i.hol { background: var(--accent); }
 
-/* Credentials */
+.org { display: grid; gap: 10px; }
+.org > *, .org-children > *, .org-item { min-width: 0; }
+.org-children { display: grid; gap: 10px; margin-left: 22px; padding-left: 18px; border-left: 2px solid var(--line-strong); }
+.org-node { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.org-node.leader { border-color: var(--accent-line); background: var(--accent-soft); }
+.org-node .grow { flex: 1; min-width: 160px; }
+.org-node b { font-family: var(--font-display); }
+.org-node select { width: auto; max-width: 100%; min-height: 36px; padding: 6px 10px; font-size: 13.5px; }
+
+.timeline { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; margin-top: 12px; }
+.timeline div { text-align: center; font-size: 11px; color: var(--faint); }
+.timeline i { display: block; height: 26px; border-radius: 6px; background: var(--accent); margin-bottom: 4px; }
+.timeline i.y2 { background: var(--ink); }
+
 .cred { display: grid; gap: 12px; }
 .cred-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px dashed var(--line-strong); border-radius: 12px; padding: 12px 14px; background: var(--surface-2); flex-wrap: wrap; }
 .cred-row small { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; font-family: var(--font-display); }
 .cred-row .mono { font-size: 18px; font-weight: 600; user-select: all; word-break: break-all; }
 
-/* Modal + toast */
 .overlay { position: fixed; inset: 0; background: var(--overlay); display: grid; place-items: center; padding: 16px; z-index: 50; }
-.modal { width: min(560px, 100%); max-height: calc(100% - 32px); overflow-y: auto; background: var(--surface); border-radius: 20px; padding: 26px; box-shadow: 0 30px 80px rgba(20, 5, 60, .35); display: grid; gap: 18px; }
+.modal { width: min(560px, 100%); max-height: calc(100% - 32px); overflow-y: auto; background: var(--surface); border-radius: 20px; padding: 26px; box-shadow: 0 30px 80px rgba(0, 0, 0, .35); display: grid; gap: 18px; }
 .modal h2 { font-size: 24px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
-.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 12px 20px; border-radius: 999px; font-weight: 600; font-size: 14px; z-index: 60; box-shadow: var(--shadow); max-width: calc(100% - 32px); text-align: center; }
-
-.mobile-bar { display: none; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--on-ink); padding: 12px 20px; border-radius: 999px; font-weight: 600; font-size: 14px; z-index: 60; max-width: calc(100% - 32px); text-align: center; }
 
 @media (max-width: 1100px) {
   .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -274,57 +279,72 @@ td.actions { white-space: nowrap; text-align: right; }
   .login-hero { padding: 32px 20px; }
   .hero-cards { grid-template-columns: minmax(0, 1fr); }
   .shell { grid-template-columns: minmax(0, 1fr); }
-  .side { position: static; height: auto; padding: 14px 16px; gap: 12px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .side { position: static; height: auto; padding: 14px 16px; gap: 12px; border-right: 0; border-bottom: 1px solid var(--line); overflow: visible; }
   .side-brand { display: flex; align-items: center; justify-content: space-between; padding: 0; }
   .nav { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
   .nav-group { display: contents; }
   .nav-label { display: none; }
-  .org-children { margin-left: 8px; padding-left: 10px; }
-  .org-node .grow { min-width: 0; flex-basis: calc(100% - 60px); }
-  .org-node label { flex: 1 1 100%; min-width: 0; }
-  .org-node select { width: 100%; min-width: 0; }
   .nav button { white-space: nowrap; flex: none; }
   .side-foot { margin: 0; padding-top: 10px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
-  .side-foot .btn-row { display: flex; gap: 6px; }
   .grid-2 { grid-template-columns: minmax(0, 1fr); }
   .approval { grid-template-columns: minmax(0, 1fr); }
   .approval .btns { grid-auto-flow: column; justify-content: start; }
   .main { padding-top: 22px; }
+  .org-children { margin-left: 8px; padding-left: 10px; }
+  .org-node .grow { min-width: 0; flex-basis: calc(100% - 60px); }
+  .org-node label { flex: 1 1 100%; min-width: 0; }
+  .org-node select { width: 100%; min-width: 0; }
 }
 @media (max-width: 520px) {
   .grid-4 { grid-template-columns: minmax(0, 1fr); }
   .form-grid, .form-grid.hol-grid { grid-template-columns: minmax(0, 1fr); }
-  .balance .big { font-size: 38px; }
+  .tile .big { font-size: 38px; }
+  .timeline { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
 <div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 (function () {
-  const STORE_KEY = 'swing-hris-attendance-v2';
+  const STORE_KEY = 'swing-hris-attendance-v3';
+  const PRELOADED_ROSTER = /*ROSTER*/null/*END*/;
   const ROLE_LABEL = { admin: 'HR admin', leader: 'Leader', reportee: 'Reportee' };
-  const GRADES = ['1.1', '1.2', '2.1', '2.2', '3.1', '3.2', '4.1', '4.2'];
+  const STATUS_LABEL = { FT: 'Full time', PT: 'Part time' };
   const COUNTRIES = { ID: 'Indonesia', MY: 'Malaysia' };
-  const DEPARTMENTS = ['Product', 'Tech', 'Operations', 'Growth', 'Marketing', 'People', 'Finance', 'Regional', 'Business'];
+  const LEAVE_TYPES = [
+    { code: 'PL', name: 'Paid leave', hint: 'Uses your earned paid leave balance.' },
+    { code: 'SL', name: 'Sick leave', hint: 'Attach a surat sakit (doctor\'s note). Does not use your paid leave balance.' },
+    { code: 'OL', name: 'Other leave', hint: 'Tell your leader what the leave is for. Does not use your paid leave balance.' }
+  ];
   const LOGO_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M18.4 8.2A7.5 7.5 0 1 0 19.5 12"/><path d="M5 19 19.5 4.5"/><path d="M13.5 4.5h6v6"/></svg>';
 
   const app = document.getElementById('app');
-  const ui = { view: null, reqFilter: 'all', approvalsTab: 'pending', calMonth: null, calCountry: 'all', holCountry: 'ID', empQuery: '', confirmCancel: null, modal: null, draft: null };
+  const ui = { view: null, reqFilter: 'all', approvalsTab: 'pending', calMonth: null, calCountry: 'all', holCountry: 'ID', empQuery: '', empFilter: 'all', confirmCancel: null, modal: null, draft: null, revealed: null };
 
   // ---------- dates ----------
   const pad = n => String(n).padStart(2, '0');
   const toISO = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   const fromISO = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
   const todayISO = () => toISO(new Date());
+  const thisYear = () => new Date().getFullYear();
   const addDays = (iso, n) => { const d = fromISO(iso); d.setDate(d.getDate() + n); return toISO(d); };
+  const addMonths = (iso, k) => {
+    const [y, m, d] = iso.split('-').map(Number);
+    const target = new Date(y, m - 1 + k, 1);
+    const last = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(d, last));
+    return toISO(target);
+  };
   const isWeekend = iso => { const g = fromISO(iso).getDay(); return g === 0 || g === 6; };
   const nextWorkday = (iso, n) => { let d = iso; while (isWeekend(d)) d = addDays(d, 1); let left = n || 0; while (left > 0) { d = addDays(d, 1); if (!isWeekend(d)) left--; } return d; };
   const fmt = (iso, opts) => fromISO(iso).toLocaleDateString('en-GB', opts || { day: 'numeric', month: 'short', year: 'numeric' });
   const fmtShort = iso => fmt(iso, { weekday: 'short', day: 'numeric', month: 'short' });
   const fmtRange = (a, b) => a === b ? fmt(a, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : fmt(a, { day: 'numeric', month: 'short' }) + ' - ' + fmt(b);
-  const fmtDays = n => (Number.isInteger(n) ? n : n.toFixed(1)) + (n === 1 ? ' day' : ' days');
+  const fmtNum = n => Number.isInteger(n) ? String(n) : n.toFixed(1);
+  const fmtDays = n => fmtNum(n) + (n === 1 ? ' day' : ' days');
 
   // ---------- seed ----------
   function seedHolidays() {
@@ -347,60 +367,21 @@ td.actions { white-space: nowrap; text-align: right; }
     };
   }
 
+  function rosterToEmployee(p) {
+    return { id: p.username, name: p.name, status: p.ftpt === 'PT' ? 'PT' : 'FT', entity: p.entity || 'Swing', country: 'ID', joinDate: '', managerId: null,
+      role: p.access === 'Leader' ? 'leader' : p.access === 'HR admin' ? 'admin' : 'reportee', password: p.password, mustChange: true, active: true };
+  }
+
   function seed() {
-    const t = todayISO();
-    const s = {
+    return {
       seq: { req: 0 },
       sessionUserId: null,
-      leaveTypes: [
-        { code: 'AL', name: 'Annual leave', paid: true, quota: { ID: 12, MY: 14 }, docRule: 'none' },
-        { code: 'SL', name: 'Sick leave', paid: true, quota: { ID: 14, MY: 14 }, docRule: 'over1' },
-        { code: 'SP', name: 'Special leave', paid: true, quota: { ID: 3, MY: 3 }, docRule: 'always', hint: 'Marriage, child\'s birth, bereavement' },
-        { code: 'MT', name: 'Maternity leave', paid: true, quota: { ID: 90, MY: 98 }, docRule: 'always' },
-        { code: 'UL', name: 'Unpaid leave', paid: false, quota: null, docRule: 'none' }
-      ],
+      policy: { perMonth: 1, validYears: 2 },
       holidays: seedHolidays(),
-      employees: [
-        { id: 'SW-ID-0001', name: 'Nadia Kartika', email: 'nadia@getswing.app', country: 'ID', department: 'People', title: 'People Ops Lead', grade: '2.2', role: 'admin', managerId: 'SW-ID-0007', joinDate: '2023-02-01', password: 'swing-admin', mustChange: false, active: true },
-        { id: 'SW-ID-0002', name: 'Rina Puspita', email: 'rina@getswing.app', country: 'ID', department: 'Operations', title: 'Growth Operations Associate', grade: '1.2', role: 'reportee', managerId: 'SW-ID-0008', joinDate: '2024-06-10', password: 'swing2026', mustChange: false, active: true },
-        { id: 'SW-MY-0003', name: 'Aiman Hakim', email: 'aiman@getswing.app', country: 'MY', department: 'Operations', title: 'Country Manager', grade: '3.1', role: 'leader', managerId: 'SW-ID-0007', joinDate: '2022-09-05', password: 'swing2026', mustChange: false, active: true },
-        { id: 'SW-ID-0004', name: 'Dimas Pratama', email: 'dimas@getswing.app', country: 'ID', department: 'Tech', title: 'Tech Lead', grade: '3.1', role: 'leader', managerId: 'SW-ID-0007', joinDate: '2023-11-20', password: 'swing2026', mustChange: false, active: true },
-        { id: 'SW-MY-0005', name: 'Tan Mei Ling', email: 'meiling@getswing.app', country: 'MY', department: 'Marketing', title: 'Marketing Specialist', grade: '2.1', role: 'reportee', managerId: 'SW-MY-0003', joinDate: '2024-01-15', password: 'swing2026', mustChange: false, active: true },
-        { id: 'SW-ID-0006', name: 'Sarah Wijaya', email: '', country: 'ID', department: 'Operations', title: 'Fulfilment Associate', grade: '1.1', role: 'reportee', managerId: 'SW-ID-0008', joinDate: '2025-08-01', password: 'swing2026', mustChange: false, active: true },
-        { id: 'SW-ID-0007', name: 'Budi Santoso', email: 'budi@getswing.app', country: 'ID', department: 'Business', title: 'Chief Operating Officer', grade: '4.1', role: 'leader', managerId: null, joinDate: '2021-03-01', password: 'swing2026', mustChange: false, active: true },
-        { id: 'SW-ID-0008', name: 'Fajar Nugroho', email: 'fajar@getswing.app', country: 'ID', department: 'Operations', title: 'Head of Operations ID', grade: '3.1', role: 'leader', managerId: 'SW-ID-0007', joinDate: '2022-01-10', password: 'swing2026', mustChange: false, active: true },
-        { id: 'SW-ID-0009', name: 'Andi Saputra', email: 'andi@getswing.app', country: 'ID', department: 'Tech', title: 'Engineer', grade: '2.1', role: 'reportee', managerId: 'SW-ID-0004', joinDate: '2025-02-17', password: 'swing2026', mustChange: false, active: true }
-      ],
+      employees: [{ id: 'admin', name: 'People Ops Admin', status: 'FT', entity: 'Swing', country: 'ID', joinDate: '', managerId: null, role: 'admin', system: true, password: 'swing-admin', mustChange: false, active: true }]
+        .concat((PRELOADED_ROSTER || []).map(rosterToEmployee)),
       requests: []
     };
-    const add = (empId, type, start, end, status, extra) => {
-      s.seq.req++;
-      const emp = s.employees.find(e => e.id === empId);
-      const days = countDays(start, end, emp.country, extra && extra.half, s.holidays).days;
-      s.requests.push(Object.assign({ id: 'LV-' + String(s.seq.req).padStart(4, '0'), empId, type, start, end, half: 'none', days, reason: '', attachment: '', status, createdAt: addDays(start, -7), decidedBy: status === 'pending' ? null : (emp.managerId || 'SW-ID-0001'), decidedAt: status === 'pending' ? null : addDays(start, -5), note: '' }, extra || {}, { days }));
-    };
-    const p1 = nextWorkday(addDays(t, -48)), p2 = nextWorkday(addDays(t, -26));
-    add('SW-ID-0002', 'AL', p1, nextWorkday(p1, 2), 'approved', { reason: 'Family trip to Yogyakarta' });
-    add('SW-ID-0002', 'SL', p2, p2, 'approved', { reason: 'Fever', attachment: '' });
-    add('SW-ID-0004', 'UL', nextWorkday(addDays(t, -15)), nextWorkday(addDays(t, -15), 4), 'rejected', { reason: 'Personal travel', note: 'Sprint release week. Please move to the week after and resubmit.' });
-    const offStart = isWeekend(t) ? nextWorkday(t) : t;
-    add('SW-MY-0003', 'AL', offStart, nextWorkday(offStart, 1), 'approved', { reason: 'Hari Raya family visit', createdAt: addDays(t, -12) });
-    add('SW-MY-0005', 'SL', offStart, offStart, 'pending', { reason: 'Gastric flu, clinic visit this morning', attachment: 'MC_Klinik_Mediviron.pdf', createdAt: t });
-    const d1 = nextWorkday(t, 8);
-    add('SW-ID-0004', 'AL', d1, nextWorkday(d1, 4), 'pending', { reason: 'Year-end trip to Lombok', createdAt: addDays(t, -1) });
-    const d2 = nextWorkday(t, 16);
-    add('SW-ID-0006', 'SP', d2, nextWorkday(d2, 2), 'pending', { reason: 'Own wedding', attachment: 'Undangan_pernikahan.pdf', createdAt: addDays(t, -2) });
-    const d5 = nextWorkday(t, 11);
-    add('SW-ID-0009', 'AL', d5, nextWorkday(d5, 1), 'pending', { reason: 'Moving house', createdAt: t });
-    const d6 = nextWorkday(t, 30);
-    add('SW-ID-0008', 'AL', d6, nextWorkday(d6, 3), 'pending', { reason: 'Umrah with parents', createdAt: addDays(t, -3) });
-    const d7 = nextWorkday(addDays(t, -20));
-    add('SW-ID-0009', 'SL', d7, d7, 'approved', { reason: 'Migraine' });
-    const d3 = nextWorkday(t, 4);
-    add('SW-MY-0005', 'AL', d3, nextWorkday(d3, 2), 'approved', { reason: 'Penang with family', createdAt: addDays(t, -9) });
-    const d4 = nextWorkday(t, 22);
-    add('SW-ID-0002', 'AL', d4, nextWorkday(d4, 1), 'pending', { reason: 'Sister\'s graduation in Bandung', createdAt: addDays(t, -1) });
-    return s;
   }
 
   // ---------- store ----------
@@ -413,18 +394,20 @@ td.actions { white-space: nowrap; text-align: right; }
 
   // ---------- domain ----------
   const emp = id => state.employees.find(e => e.id === id);
-  const leaveType = code => state.leaveTypes.find(t => t.code === code);
+  const leaveType = code => LEAVE_TYPES.find(t => t.code === code);
   const me = () => state.sessionUserId ? emp(state.sessionUserId) : null;
-  const holidaysOf = (country, hol) => (hol || state.holidays)[country] || [];
+  const people = () => state.employees.filter(e => !e.system);
+  const holidaysOf = country => state.holidays[country] || [];
   const holidayOn = (iso, country) => holidaysOf(country).find(h => h.date === iso);
+  const typeLabel = r => leaveType(r.type).name + (r.type === 'OL' && r.specify ? ': ' + esc(r.specify) : '');
 
-  function countDays(start, end, country, half, hol) {
+  function countDays(start, end, country, half) {
     const skipped = [];
     if (!start || !end || end < start) return { days: 0, skipped };
     let days = 0;
     for (let d = start; d <= end; d = addDays(d, 1)) {
-      const h = holidaysOf(country, hol).find(x => x.date === d);
       if (isWeekend(d)) continue;
+      const h = holidayOn(d, country);
       if (h) { skipped.push({ date: d, name: h.name }); continue; }
       days++;
     }
@@ -432,15 +415,41 @@ td.actions { white-space: nowrap; text-align: right; }
     return { days, skipped };
   }
 
-  function balance(e, code) {
-    const t = leaveType(code);
-    const year = String(new Date().getFullYear());
-    const mine = state.requests.filter(r => r.empId === e.id && r.type === code && r.start.slice(0, 4) === year);
-    const used = mine.filter(r => r.status === 'approved').reduce((a, r) => a + r.days, 0);
-    const pending = mine.filter(r => r.status === 'pending').reduce((a, r) => a + r.days, 0);
-    const quota = t.quota ? Number(t.quota[e.country]) : null;
-    return { quota, used, pending, available: quota == null ? null : quota - used - pending };
+  // Paid leave: perMonth days earned on each monthly anniversary of the join date.
+  // Days earned in year Y stay valid until 31 Dec of year Y + validYears - 1. Leave uses the oldest valid days first.
+  function paidLedger(e, extra) {
+    const t = todayISO(), year = thisYear();
+    const lots = [];
+    if (e.joinDate) {
+      for (let k = 1; k < 1200; k++) {
+        const d = addMonths(e.joinDate, k);
+        if (d > t) break;
+        lots.push({ earnedOn: d, expiresOn: (Number(d.slice(0, 4)) + state.policy.validYears - 1) + '-12-31', left: state.policy.perMonth });
+      }
+    }
+    const uses = state.requests.filter(r => r.empId === e.id && r.type === 'PL' && (r.status === 'approved' || r.status === 'pending'))
+      .concat(extra ? [extra] : []).sort((a, b) => a.start.localeCompare(b.start));
+    let short = 0;
+    uses.forEach(r => {
+      let need = r.days;
+      lots.forEach(l => { if (need > 0 && l.left > 0 && l.expiresOn >= r.start) { const take = Math.min(l.left, need); l.left -= take; need -= take; } });
+      if (r === extra) short = need;
+    });
+    const validAt = d => lots.filter(l => l.expiresOn >= d).reduce((a, l) => a + l.left, 0);
+    const mine = state.requests.filter(r => r.empId === e.id && r.type === 'PL' && r.start.slice(0, 4) === String(year));
+    const next = e.joinDate ? (() => { let k = 1, d; do { d = addMonths(e.joinDate, k++); } while (d <= t); return d; })() : null;
+    return {
+      hasJoin: !!e.joinDate,
+      available: validAt(t),
+      earnedThisYear: lots.filter(l => l.earnedOn.slice(0, 4) === String(year)).length * state.policy.perMonth,
+      carried: lots.filter(l => l.earnedOn.slice(0, 4) < String(year) && l.expiresOn >= t).reduce((a, l) => a + l.left, 0),
+      expiringThisYear: lots.filter(l => l.expiresOn === year + '-12-31').reduce((a, l) => a + l.left, 0),
+      used: mine.filter(r => r.status === 'approved').reduce((a, r) => a + r.days, 0),
+      pending: mine.filter(r => r.status === 'pending').reduce((a, r) => a + r.days, 0),
+      next, short, validAt
+    };
   }
+  const takenThisYear = (e, code) => state.requests.filter(r => r.empId === e.id && r.type === code && r.status === 'approved' && r.start.slice(0, 4) === String(thisYear())).reduce((a, r) => a + r.days, 0);
 
   const directReports = id => state.employees.filter(e => e.managerId === id);
   const isLeader = u => u.role === 'leader' || (u.role === 'admin' && directReports(u.id).length > 0);
@@ -455,23 +464,22 @@ td.actions { white-space: nowrap; text-align: right; }
   }
   function isBelow(candidateId, rootId) {
     let cur = emp(candidateId), guard = 0;
-    while (cur && cur.managerId && guard++ < 50) { if (cur.managerId === rootId) return true; cur = emp(cur.managerId); }
+    while (cur && cur.managerId && guard++ < 200) { if (cur.managerId === rootId) return true; cur = emp(cur.managerId); }
     return false;
   }
-  function leaderOptions(forId, selected) {
-    const opts = state.employees.filter(e => (e.active || e.id === selected) && e.id !== forId && (e.role === 'leader' || e.role === 'admin') && !(forId && isBelow(e.id, forId)));
-    return '<option value="">No one (top of the line)</option>' + opts.map(e => '<option value="' + e.id + '"' + (selected === e.id ? ' selected' : '') + '>' + esc(e.name) + ' · ' + esc(e.title) + '</option>').join('');
+  function leaderOptions(forId, selected, blankLabel) {
+    const opts = state.employees.filter(e => !e.system && (e.active || e.id === selected) && e.id !== forId && (e.role === 'leader' || e.role === 'admin') && !(forId && isBelow(e.id, forId)));
+    return '<option value="">' + (blankLabel || 'Not set (People Ops approves)') + '</option>' + opts.map(e => '<option value="' + e.id + '"' + (selected === e.id ? ' selected' : '') + '>' + esc(e.name) + (e.entity === 'GSA' ? ' (GSA)' : '') + '</option>').join('');
   }
 
-  function docRequired(t, days) {
-    return t.docRule === 'always' || (t.docRule === 'over1' && days > 1);
+  function makeUsername(name, entity) {
+    const tokens = name.replace(/\(gsa\)/ig, '').toLowerCase().replace(/[^a-z ]/g, ' ').split(/\s+/).filter(t => t.length > 1);
+    if (!tokens.length) return null;
+    const base = (tokens.length === 1 ? tokens[0] : tokens[0] + '.' + tokens[tokens.length - 1]) + (entity === 'GSA' ? '.gsa' : '');
+    let cand = base, n = 2;
+    while (emp(cand)) cand = base + n++;
+    return cand;
   }
-
-  function nextEmpId(country) {
-    const max = state.employees.reduce((m, e) => Math.max(m, Number(e.id.split('-')[2]) || 0), 0);
-    return 'SW-' + country + '-' + String(max + 1).padStart(4, '0');
-  }
-
   function generatePassword() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
     const buf = new Uint32Array(12);
@@ -480,10 +488,12 @@ td.actions { white-space: nowrap; text-align: right; }
     return raw.slice(0, 4) + '-' + raw.slice(4, 8) + '-' + raw.slice(8, 12);
   }
 
-  const initials = name => name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+  const initials = name => name.replace(/\(.*?\)/g, '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const statusPill = s => '<span class="pill ' + s + '">' + s[0].toUpperCase() + s.slice(1) + '</span>';
   const isOn = (r, iso) => r.start <= iso && r.end >= iso && !isWeekend(iso);
+  const avatar = (e, extra) => '<span class="avatar' + (e.role !== 'reportee' ? ' leader' : '') + (extra ? ' ' + extra : '') + '">' + initials(e.name) + '</span>';
+  const subline = e => STATUS_LABEL[e.status] + (e.entity === 'GSA' ? ' · GSA' : '') + (e.role !== 'reportee' ? ' · ' + ROLE_LABEL[e.role] : '');
 
   // ---------- toast / modal ----------
   let toastTimer;
@@ -491,15 +501,14 @@ td.actions { white-space: nowrap; text-align: right; }
     let el = document.querySelector('.toast');
     if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
     el.textContent = msg; el.hidden = false;
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 2800);
   }
   function openModal(m) { ui.modal = m; render(); }
   function closeModal() { ui.modal = null; render(); }
   function copy(text, btn) {
     const done = () => { toast('Copied to clipboard'); if (btn) { const o = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = o; }, 1500); } };
-    try {
-      navigator.clipboard.writeText(text).then(done, () => toast('Copy is blocked here. Select the text and copy it manually.'));
-    } catch (e) { toast('Copy is blocked here. Select the text and copy it manually.'); }
+    try { navigator.clipboard.writeText(text).then(done, () => toast('Copy is blocked here. Select the text and copy it manually.')); }
+    catch (e) { toast('Copy is blocked here. Select the text and copy it manually.'); }
   }
 
   // ---------- render root ----------
@@ -508,44 +517,42 @@ td.actions { white-space: nowrap; text-align: right; }
     if (!u) app.innerHTML = loginView();
     else if (u.mustChange) app.innerHTML = forceChangeView(u);
     else app.innerHTML = shellView(u);
-    if (ui.modal) app.insertAdjacentHTML('beforeend', '<div class="overlay" data-action="overlay"><div class="modal" role="dialog" aria-modal="true">' + modalView(ui.modal) + '</div></div>');
+    if (ui.modal) app.insertAdjacentHTML('beforeend', '<div class="overlay"><div class="modal" role="dialog" aria-modal="true">' + modalView(ui.modal) + '</div></div>');
     afterRender();
   }
 
-  // ---------- login ----------
+  const HERO_MARK = '<svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18.4 8.2A7.5 7.5 0 1 0 19.5 12"/><path d="M5 19 19.5 4.5"/><path d="M13.5 4.5h6v6"/></svg>';
+
   function loginView() {
-    const demos = ['SW-ID-0001', 'SW-ID-0007', 'SW-ID-0008', 'SW-ID-0002'].map(emp).filter(e => e && e.active);
     return '<div class="login">' +
-      '<section class="login-hero">' +
-        '<div class="logo on-grad">' + LOGO_SVG + 'swing</div>' +
+      '<section class="login-hero">' + HERO_MARK +
+        '<div class="logo on-hero">' + LOGO_SVG + 'swing</div>' +
         '<div><div class="eyebrow">People · HRIS · Attendance</div>' +
-        '<h1>Time off,<br>in one place.</h1>' +
-        '<p>Request paid leave and sick leave, track your balance, and see the public holidays for Indonesia and Malaysia. Your leader or People Ops approves it.</p></div>' +
+        '<h1>Time off,<br><em>in one place.</em></h1>' +
+        '<p>Pick your dates and submit. Paid leave builds up every month from your join date. Your leader or People Ops approves it.</p></div>' +
         '<div class="hero-cards">' +
-          '<div>Paid leave<strong>12-14 days a year</strong></div>' +
-          '<div>Sick leave<strong>MC after day 1</strong></div>' +
-          '<div>Holidays<strong>ID and MY calendars</strong></div>' +
+          '<div>Paid leave<strong>+1 day every month</strong></div>' +
+          '<div>Sick leave<strong>With surat sakit</strong></div>' +
+          '<div>Carry over<strong>Valid for 2 years</strong></div>' +
         '</div>' +
       '</section>' +
       '<section class="login-panel"><div class="login-box">' +
-        '<div><h2>Sign in</h2><p class="muted" style="margin-top:6px">Use the user ID and temporary password your HR admin gave you.</p></div>' +
+        '<div><h2>Sign in</h2><p class="muted" style="margin-top:6px">Use the username and temporary password from People Ops.</p></div>' +
         '<form id="login-form" class="stack" novalidate>' +
-          '<label class="field"><span>User ID</span><input class="input mono" id="login-id" autocomplete="username" placeholder="SW-ID-0002" required></label>' +
-          '<label class="field"><span>Password</span><div class="pw-wrap"><input class="input" id="login-pw" type="password" autocomplete="current-password" required><button type="button" class="btn ghost sm" data-action="toggle-pw">Show</button></div></label>' +
+          '<label class="field"><span>Username</span><input class="input mono" id="login-id" autocomplete="username" placeholder="e.g. firstname.lastname" autocapitalize="none" spellcheck="false"></label>' +
+          '<label class="field"><span>Password</span><div class="pw-wrap"><input class="input" id="login-pw" type="password" autocomplete="current-password"><button type="button" class="btn ghost sm" data-action="toggle-pw">Show</button></div></label>' +
           '<p class="error-text" id="login-error" hidden></p>' +
           '<button class="btn primary" type="submit">Sign in</button>' +
         '</form>' +
-        '<div class="note"><div><b>Email sign-in is not connected yet.</b> Your HR admin creates your user ID and a temporary password. You set your own password the first time you sign in.</div></div>' +
-        '<div class="stack" style="gap:10px"><span class="label">Demo accounts · click to fill</span><div class="demo-list">' +
-          demos.map(e => '<button type="button" class="demo" data-action="demo" data-id="' + e.id + '"><span><b>' + esc(e.name) + '</b><span class="faint mono">' + e.id + '</span></span><span class="tag">' + ROLE_LABEL[e.role] + ' · ' + e.country + '</span></button>').join('') +
-        '</div></div>' +
+        '<div class="note"><div><b>Email sign-in is not connected yet.</b> People Ops gives you a username and a temporary password. You set your own password the first time you sign in.</div></div>' +
+        '<div class="note" style="background:var(--surface-2);border-color:var(--line)"><div><b>Prototype.</b> HR admin signs in with <span class="mono">admin</span> / <span class="mono">swing-admin</span>.' + (PRELOADED_ROSTER ? ' Employee credentials are in the master data file.' : ' Import the master data file from Employees &amp; access to create employee accounts.') + '</div></div>' +
       '</div></section>' +
     '</div>';
   }
 
   function forceChangeView(u) {
-    return '<div class="login"><section class="login-hero"><div class="logo on-grad">' + LOGO_SVG + 'swing</div>' +
-      '<div><div class="eyebrow">Welcome, ' + esc(u.name.split(' ')[0]) + '</div><h1>Set your own password.</h1><p>You signed in with a temporary password from your HR admin. Choose a new one to continue. Your user ID stays <span class="mono">' + u.id + '</span>.</p></div><div></div></section>' +
+    return '<div class="login"><section class="login-hero">' + HERO_MARK + '<div class="logo on-hero">' + LOGO_SVG + 'swing</div>' +
+      '<div><div class="eyebrow">Welcome, ' + esc(u.name.split(' ')[0]) + '</div><h1>Set your own <em>password.</em></h1><p>You signed in with a temporary password from People Ops. Choose a new one to continue. Your username stays <span class="mono">' + esc(u.id) + '</span>.</p></div><div></div></section>' +
       '<section class="login-panel"><div class="login-box"><h2>New password</h2>' +
       '<form id="force-form" class="stack" novalidate>' +
         '<label class="field"><span>New password</span><input class="input" id="fc-new" type="password" autocomplete="new-password"><small>At least 8 characters.</small></label>' +
@@ -560,7 +567,8 @@ td.actions { white-space: nowrap; text-align: right; }
   function navFor(u) {
     const teamPending = state.requests.filter(r => r.status === 'pending' && emp(r.empId).managerId === u.id).length;
     const allPending = state.requests.filter(r => canApprove(u, r)).length;
-    const groups = [{ label: 'My leave', items: [['overview', 'Overview'], ['request', 'Request leave'], ['mine', 'My requests'], ['holidays', 'Public holidays']] }];
+    const groups = [];
+    if (!u.system) groups.push({ label: 'My leave', items: [['overview', 'Overview'], ['request', 'Request leave'], ['mine', 'My requests'], ['holidays', 'Public holidays']] });
     if (isLeader(u)) groups.push({ label: 'My team', items: [['t-approvals', 'Team approvals', teamPending], ['t-team', 'Team members'], ['t-calendar', 'Team calendar']] });
     if (u.role === 'admin') groups.push({ label: 'People Ops', items: [['a-overview', 'Dashboard'], ['a-approvals', 'All approvals', allPending], ['a-employees', 'Employees & access'], ['a-org', 'Reporting line'], ['a-calendar', 'Leave calendar'], ['a-policy', 'Leave policy'], ['a-holidays', 'Public holidays']] });
     groups.push({ label: 'Settings', items: [['account', 'Account']] });
@@ -578,8 +586,8 @@ td.actions { white-space: nowrap; text-align: right; }
         '<nav class="nav" aria-label="Main">' + groups.map(g => '<div class="nav-group"><div class="nav-label">' + g.label + '</div>' + g.items.map(([k, label, count]) =>
           '<button class="' + (ui.view === k ? 'on' : '') + '" data-nav="' + k + '"><span>' + label + '</span>' + (count ? '<span class="count num">' + count + '</span>' : '') + '</button>').join('') + '</div>').join('') + '</nav>' +
         '<div class="side-foot">' +
-          '<div class="me"><span class="avatar">' + initials(u.name) + '</span><div><b>' + esc(u.name) + '</b><span class="faint mono" style="font-size:12px">' + u.id + '</span></div></div>' +
-          '<div class="btn-row"><button class="btn sm" data-action="logout">Sign out</button></div>' +
+          '<div class="me">' + avatar(u) + '<div><b>' + esc(u.name) + '</b><span class="faint mono" style="font-size:12px">' + esc(u.id) + '</span></div></div>' +
+          '<div><button class="btn sm" data-action="logout">Sign out</button></div>' +
         '</div>' +
       '</aside>' +
       '<main class="main">' +
@@ -589,18 +597,20 @@ td.actions { white-space: nowrap; text-align: right; }
     '</div>';
   }
 
-  // ---------- employee views ----------
-  function balanceTile(u, t) {
-    const b = balance(u, t.code);
-    if (b.quota == null) {
-      return '<div class="card balance"><span class="label">' + t.name + '</span><div class="big num">' + b.used + '</div><div class="of">days taken this year</div><div class="meta"><span>No yearly quota</span>' + (b.pending ? '<span>' + b.pending + ' pending</span>' : '') + '</div></div>';
+  const VIEWS = {};
+
+  // ---------- my leave ----------
+  function paidTiles(u) {
+    const L = paidLedger(u);
+    if (!L.hasJoin) {
+      return '<div class="card tile"><span class="label">Paid leave available</span><div class="big">-</div><div class="of">Your join date is not set yet, so no paid leave has been earned. Ask People Ops to add it.</div></div>';
     }
-    const usedPct = Math.min(100, b.used / b.quota * 100), pendPct = Math.min(100 - usedPct, b.pending / b.quota * 100);
-    return '<div class="card balance"><span class="label">' + t.name + '</span>' +
-      '<div class="big num grad-text">' + b.available + '</div>' +
-      '<div class="of">of ' + b.quota + ' days available</div>' +
-      '<div class="meter" title="' + b.used + ' used, ' + b.pending + ' pending"><i class="used" style="width:' + usedPct + '%"></i><i class="pend" style="width:' + pendPct + '%"></i></div>' +
-      '<div class="meta num"><span>' + b.used + ' used</span><span>' + b.pending + ' pending</span></div></div>';
+    const total = Math.ceil(L.available + L.used + L.pending);
+    let dots = '';
+    for (let i = 0; i < Math.min(total, 36); i++) dots += '<i class="' + (i < L.used ? 'used' : i < L.used + L.pending ? 'pend' : 'avail') + '"></i>';
+    return '<div class="card tile"><span class="label">Paid leave available</span><div class="big num accent">' + fmtNum(L.available) + '</div><div class="of">days you can book now</div><div class="dots" aria-hidden="true">' + dots + '</div><div class="meta num"><span>' + fmtNum(L.used) + ' used this year</span><span>' + fmtNum(L.pending) + ' pending</span></div></div>' +
+      '<div class="card tile"><span class="label">Earned in ' + thisYear() + '</span><div class="big num">' + fmtNum(L.earnedThisYear) + '</div><div class="of">+' + fmtNum(state.policy.perMonth) + ' on ' + fmt(L.next) + '</div><div class="meta num"><span>' + fmtNum(L.carried) + ' carried over from earlier years</span></div></div>' +
+      '<div class="card tile"><span class="label">Expires 31 Dec ' + thisYear() + '</span><div class="big num">' + fmtNum(L.expiringThisYear) + '</div><div class="of">' + (L.expiringThisYear ? 'Use these first. They are not carried over again.' : 'Nothing expires this year.') + '</div></div>';
   }
 
   function holidayList(country, from, limit) {
@@ -609,56 +619,55 @@ td.actions { white-space: nowrap; text-align: right; }
     return '<div class="list">' + list.map(h => '<div class="list-item"><div class="date-chip"><b class="num">' + fromISO(h.date).getDate() + '</b><small>' + fmt(h.date, { month: 'short' }) + '</small></div><div class="grow"><b>' + esc(h.name) + '</b><div class="faint">' + fmt(h.date, { weekday: 'long' }) + (isWeekend(h.date) ? ' · falls on a weekend' : '') + '</div></div></div>').join('') + '</div>';
   }
 
-  const VIEWS = {};
-
   VIEWS.overview = u => {
     const t = todayISO();
     const upcoming = state.requests.filter(r => r.empId === u.id && r.end >= t && (r.status === 'approved' || r.status === 'pending')).sort((a, b) => a.start.localeCompare(b.start));
-    const tiles = ['AL', 'SL', 'SP', 'UL'].map(c => balanceTile(u, leaveType(c))).join('');
     const teamWaiting = state.requests.filter(r => r.status === 'pending' && emp(r.empId).managerId === u.id).length;
+    const m = u.managerId && emp(u.managerId);
     return {
-      eyebrow: 'Attendance · ' + new Date().getFullYear(),
+      eyebrow: 'Attendance · ' + thisYear(),
       title: 'Hi ' + esc(u.name.split(' ')[0]) + ', here is your time off',
-      sub: esc(u.title) + ' · Grade ' + u.grade + ' · ' + COUNTRIES[u.country] + (u.managerId && emp(u.managerId) ? ' · Reports to ' + esc(emp(u.managerId).name) : ''),
+      sub: subline(u) + (u.joinDate ? ' · Joined ' + fmt(u.joinDate) : '') + ' · ' + (m ? 'Reports to ' + esc(m.name) : 'No leader set, People Ops approves'),
       actions: '<button class="btn primary" data-nav="request">Request leave</button>',
-      body: (isLeader(u) && teamWaiting ? '<div class="card grad row" style="justify-content:space-between"><div><span class="label">My team</span><h3 style="margin-top:6px">' + teamWaiting + ' leave ' + (teamWaiting === 1 ? 'request is' : 'requests are') + ' waiting for you</h3></div><button class="btn" data-nav="t-approvals">Review now</button></div>' : '') +
-        '<section class="grid-4">' + tiles + '</section>' +
+      body: (isLeader(u) && teamWaiting ? '<div class="card dark row" style="justify-content:space-between"><div><span class="label">My team</span><h3 style="margin-top:6px">' + teamWaiting + ' leave ' + (teamWaiting === 1 ? 'request is' : 'requests are') + ' waiting for you</h3></div><button class="btn" data-nav="t-approvals">Review now</button></div>' : '') +
+        '<section class="grid-4">' + paidTiles(u) +
+          '<div class="card tile"><span class="label">Sick and other leave</span><div class="big num">' + fmtNum(takenThisYear(u, 'SL') + takenThisYear(u, 'OL')) + '</div><div class="of">days taken in ' + thisYear() + '</div><div class="meta num"><span>' + fmtNum(takenThisYear(u, 'SL')) + ' sick</span><span>' + fmtNum(takenThisYear(u, 'OL')) + ' other</span></div></div>' +
+        '</section>' +
         '<section class="grid-2">' +
           '<div class="card"><div class="card-head"><h3>Your upcoming time off</h3><button class="btn ghost sm" data-nav="mine">All requests</button></div>' +
-            (upcoming.length ? '<div class="list">' + upcoming.map(r => '<div class="list-item"><div class="date-chip"><b class="num">' + fromISO(r.start).getDate() + '</b><small>' + fmt(r.start, { month: 'short' }) + '</small></div><div class="grow"><b>' + leaveType(r.type).name + '</b><div class="faint">' + fmtRange(r.start, r.end) + ' · ' + fmtDays(r.days) + '</div></div>' + statusPill(r.status) + '</div>').join('') + '</div>' : '<p class="empty">Nothing booked yet.</p>') +
+            (upcoming.length ? '<div class="list">' + upcoming.map(r => '<div class="list-item"><div class="date-chip"><b class="num">' + fromISO(r.start).getDate() + '</b><small>' + fmt(r.start, { month: 'short' }) + '</small></div><div class="grow"><b>' + typeLabel(r) + '</b><div class="faint">' + fmtRange(r.start, r.end) + ' · ' + fmtDays(r.days) + '</div></div>' + statusPill(r.status) + '</div>').join('') + '</div>' : '<p class="empty">Nothing booked yet.</p>') +
           '</div>' +
-          '<div class="card"><div class="card-head"><h3>Next public holidays</h3><span class="tag">' + COUNTRIES[u.country] + '</span></div>' + holidayList(u.country, t, 4) + '</div>' +
+          '<div class="card"><div class="card-head"><h3>Next public holidays</h3><span class="tag plain">' + COUNTRIES[u.country] + '</span></div>' + holidayList(u.country, t, 4) + '</div>' +
         '</section>' +
-        '<div class="note"><div><b>Sick leave rule.</b> One day of sick leave needs no document. From two working days, attach a medical certificate (surat dokter / MC) to the request.</div></div>'
+        '<div class="note"><div><b>How paid leave works.</b> You earn ' + fmtDays(state.policy.perMonth) + ' for every full month since your join date. Days earned in a year can be used that year and ' + (state.policy.validYears > 1 ? 'the next ' + (state.policy.validYears === 2 ? 'year' : (state.policy.validYears - 1) + ' years') : 'not after') + ', then they expire. Your oldest days are used first.</div></div>'
     };
   };
 
   VIEWS.request = u => {
-    const d = ui.draft || (ui.draft = { type: 'AL', start: nextWorkday(addDays(todayISO(), 1)), end: nextWorkday(addDays(todayISO(), 1)), half: 'none', reason: '', attachment: '' });
-    const types = state.leaveTypes;
+    const first = nextWorkday(addDays(todayISO(), 1));
+    const d = ui.draft || (ui.draft = { type: 'PL', start: first, end: first, half: 'none', reason: '', specify: '', attachment: '' });
+    const L = paidLedger(u);
     return {
       eyebrow: 'Attendance · New request',
       title: 'Request leave',
-      sub: 'Days count working days only. Weekends and ' + COUNTRIES[u.country] + ' public holidays are skipped automatically.',
+      sub: 'Pick your dates. Days count working days only. Weekends and ' + COUNTRIES[u.country] + ' public holidays are skipped.',
       body: '<div class="split">' +
         '<form id="request-form" class="card stack" novalidate>' +
-          '<label class="field"><span>Leave type</span><select class="input" id="rq-type">' + types.map(t => {
-            const b = balance(u, t.code);
-            return '<option value="' + t.code + '"' + (d.type === t.code ? ' selected' : '') + '>' + t.name + (b.available == null ? ' · unpaid' : ' · ' + b.available + ' days available') + '</option>';
-          }).join('') + '</select><small id="rq-type-hint"></small></label>' +
+          '<div class="field"><span>Leave type</span><div class="seg" id="rq-type" role="radiogroup">' + LEAVE_TYPES.map(t => '<button type="button" role="radio" aria-checked="' + (d.type === t.code) + '" data-type="' + t.code + '" class="' + (d.type === t.code ? 'on' : '') + '">' + t.name + (t.code === 'PL' ? ' (' + (L.hasJoin ? fmtNum(L.available) : '0') + ')' : '') + '</button>').join('') + '</div><small id="rq-type-hint"></small></div>' +
           '<div class="form-grid">' +
             '<label class="field"><span>First day</span><input class="input" type="date" id="rq-start" value="' + d.start + '"></label>' +
             '<label class="field"><span>Last day</span><input class="input" type="date" id="rq-end" value="' + d.end + '"></label>' +
           '</div>' +
-          '<div class="field" id="rq-half-wrap"><span>Duration</span><div class="seg" id="rq-half">' +
+          '<div class="field"><span>Duration</span><div class="seg" id="rq-half">' +
             [['none', 'Full day'], ['am', 'Morning only'], ['pm', 'Afternoon only']].map(([k, l]) => '<button type="button" data-half="' + k + '" class="' + (d.half === k ? 'on' : '') + '">' + l + '</button>').join('') +
-          '</div><small>Half days are available for single-day requests.</small></div>' +
-          '<label class="field"><span>Reason</span><textarea class="input" id="rq-reason" placeholder="A short note for your approver">' + esc(d.reason) + '</textarea></label>' +
-          '<label class="field"><span id="rq-doc-label">Supporting document</span><input class="input" type="file" id="rq-doc" accept=".pdf,.jpg,.jpeg,.png"><small id="rq-doc-hint">PDF, JPG or PNG.' + (d.attachment ? ' Attached: ' + esc(d.attachment) : '') + '</small></label>' +
+          '</div><small>Half days are for single-day requests.</small></div>' +
+          '<label class="field" id="rq-specify-wrap"><span>Specify the leave</span><input class="input" id="rq-specify" placeholder="e.g. Wedding of a sibling, moving house, religious holiday" value="' + esc(d.specify) + '"></label>' +
+          '<label class="field" id="rq-doc-wrap"><span>Surat sakit (doctor\'s note)</span><input class="input" type="file" id="rq-doc" accept=".pdf,.jpg,.jpeg,.png"><small id="rq-doc-hint">PDF, JPG or PNG.' + (d.attachment ? ' Attached: ' + esc(d.attachment) : '') + '</small></label>' +
+          '<label class="field"><span>Note for your leader <span class="faint" style="font-weight:400">(optional)</span></span><textarea class="input" id="rq-reason" placeholder="Anything they should know">' + esc(d.reason) + '</textarea></label>' +
           '<p class="error-text" id="rq-error" hidden></p>' +
           '<div class="row"><button class="btn primary" type="submit">Submit request</button><button class="btn ghost" type="button" data-action="reset-draft">Clear</button></div>' +
         '</form>' +
-        '<aside class="card grad summary" id="rq-summary"></aside>' +
+        '<aside class="card dark summary" id="rq-summary"></aside>' +
       '</div>'
     };
   };
@@ -666,32 +675,43 @@ td.actions { white-space: nowrap; text-align: right; }
   function summaryHTML(u) {
     const d = ui.draft, t = leaveType(d.type);
     const c = countDays(d.start, d.end, u.country, d.half);
-    const b = balance(u, d.type);
-    const after = b.available == null ? null : b.available - c.days;
+    const rows = ['<dt>Dates</dt><dd>' + (d.start && d.end && d.end >= d.start ? fmtRange(d.start, d.end) : '-') + '</dd>'];
+    if (d.type === 'PL') {
+      const L = paidLedger(u);
+      const at = d.start ? L.validAt(d.start) : 0;
+      rows.push('<dt>Available on ' + (d.start ? fmt(d.start, { day: 'numeric', month: 'short' }) : 'that date') + '</dt><dd>' + (L.hasJoin ? fmtDays(at) : 'Join date not set') + '</dd>');
+      if (L.hasJoin) rows.push('<dt>Left after this</dt><dd>' + fmtDays(Math.max(0, at - c.days)) + '</dd>');
+    } else if (d.type === 'SL') {
+      rows.push('<dt>Surat sakit</dt><dd>' + (d.attachment ? 'Attached' : 'Required') + '</dd>');
+    } else {
+      rows.push('<dt>Leave for</dt><dd>' + (esc(d.specify) || 'Not specified yet') + '</dd>');
+    }
+    rows.push('<dt>Approver</dt><dd>' + approverLabel(u) + '</dd>');
     return '<span class="label">Request summary</span>' +
-      '<div class="days num">' + (c.days % 1 ? c.days.toFixed(1) : c.days) + '</div><div class="muted">working ' + (c.days === 1 ? 'day' : 'days') + ' of ' + t.name.toLowerCase() + '</div>' +
-      '<dl class="num">' +
-        '<dt>Dates</dt><dd>' + (d.start && d.end && d.end >= d.start ? fmtRange(d.start, d.end) : '-') + '</dd>' +
-        '<dt>Paid</dt><dd>' + (t.paid ? 'Yes' : 'No, unpaid') + '</dd>' +
-        (b.available == null ? '' : '<dt>Available now</dt><dd>' + b.available + ' days</dd><dt>After this request</dt><dd>' + after + ' days</dd>') +
-        '<dt>Approver</dt><dd>' + approverLabel(u) + '</dd>' +
-      '</dl>' +
+      '<div class="days num">' + fmtNum(c.days) + '</div><div class="muted">working ' + (c.days === 1 ? 'day' : 'days') + ' of ' + t.name.toLowerCase() + '</div>' +
+      '<dl class="num">' + rows.join('') + '</dl>' +
       (c.skipped.length ? '<div class="skipped"><span class="label">Public holidays skipped</span>' + c.skipped.map(s => '<span><b>' + fmtShort(s.date) + '</b>' + esc(s.name) + '</span>').join('') + '</div>' : '');
   }
 
   function validateDraft(u) {
-    const d = ui.draft, t = leaveType(d.type);
+    const d = ui.draft;
     if (!d.start || !d.end) return 'Pick a first and last day.';
     if (d.end < d.start) return 'The last day is before the first day. Swap the dates.';
     const c = countDays(d.start, d.end, u.country, d.half);
     if (c.days === 0) return 'Those dates are all weekends or public holidays, so there is nothing to request.';
-    const b = balance(u, d.type);
-    if (b.available != null && c.days > b.available) return 'You have ' + b.available + ' days of ' + t.name.toLowerCase() + ' left and this request needs ' + c.days + '. Shorten it, or use unpaid leave for the rest.';
-    if (docRequired(t, c.days) && !d.attachment) return t.code === 'SL' ? 'Sick leave of two days or more needs a medical certificate (surat dokter / MC). Attach it to continue.' : t.name + ' needs a supporting document. Attach it to continue.';
+    if (d.type === 'PL') {
+      if (!u.joinDate) return 'Your join date is not set yet, so you have no paid leave. Ask People Ops to add it, or pick Other leave.';
+      const L = paidLedger(u, { start: d.start, days: c.days });
+      if (L.short > 0) return 'You have ' + fmtDays(paidLedger(u).validAt(d.start)) + ' of paid leave available for ' + fmt(d.start) + ' and this request needs ' + fmtDays(c.days) + '. Shorten it, or pick Other leave for the rest.';
+    }
+    if (d.type === 'SL' && !d.attachment) return 'Sick leave needs a surat sakit (doctor\'s note). Attach it to continue.';
+    if (d.type === 'OL' && d.specify.trim().length < 3) return 'Specify what the leave is for, so your leader can review it.';
     const clash = state.requests.find(r => r.empId === u.id && (r.status === 'pending' || r.status === 'approved') && r.start <= d.end && r.end >= d.start);
     if (clash) return 'These dates overlap your ' + clash.status + ' request ' + clash.id + ' (' + fmtRange(clash.start, clash.end) + '). Cancel it first or pick other dates.';
     return null;
   }
+
+  const decidedByName = r => r.decidedBy && emp(r.decidedBy) ? esc(emp(r.decidedBy).name) : '-';
 
   VIEWS.mine = u => {
     const all = state.requests.filter(r => r.empId === u.id).sort((a, b) => b.start.localeCompare(a.start));
@@ -702,8 +722,8 @@ td.actions { white-space: nowrap; text-align: right; }
       title: 'My requests',
       actions: '<button class="btn primary" data-nav="request">Request leave</button>',
       body: '<div class="card"><div class="card-head"><div class="seg">' + filters.map(f => '<button data-filter="' + f + '" class="' + (ui.reqFilter === f ? 'on' : '') + '">' + f[0].toUpperCase() + f.slice(1) + (f === 'all' ? '' : ' (' + all.filter(r => r.status === f).length + ')') + '</button>').join('') + '</div></div>' +
-        (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Ref</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Decided by</th><th>Approver note</th><th></th></tr></thead><tbody>' +
-          rows.map(r => '<tr><td class="mono">' + r.id + '</td><td>' + leaveType(r.type).name + (r.attachment ? '<div class="faint" style="font-size:12.5px">' + esc(r.attachment) + '</div>' : '') + '</td><td class="num">' + fmtRange(r.start, r.end) + (r.half !== 'none' ? '<div class="faint">' + (r.half === 'am' ? 'Morning' : 'Afternoon') + '</div>' : '') + '</td><td class="num">' + r.days + '</td><td>' + statusPill(r.status) + '</td><td>' + (r.status === 'pending' ? '<span class="faint">' + approverLabel(u) + '</span>' : r.status === 'cancelled' ? '<span class="faint">You</span>' : decidedByName(r)) + '</td><td class="muted">' + (esc(r.note) || '<span class="faint">-</span>') + '</td><td class="actions">' +
+        (rows.length ? '<div class="table-wrap"><table><thead><tr><th>Ref</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Decided by</th><th>Note</th><th></th></tr></thead><tbody>' +
+          rows.map(r => '<tr><td class="mono">' + r.id + '</td><td>' + typeLabel(r) + (r.attachment ? '<div class="faint" style="font-size:12.5px">' + esc(r.attachment) + '</div>' : '') + '</td><td class="num">' + fmtRange(r.start, r.end) + (r.half !== 'none' ? '<div class="faint">' + (r.half === 'am' ? 'Morning' : 'Afternoon') + '</div>' : '') + '</td><td class="num">' + fmtNum(r.days) + '</td><td>' + statusPill(r.status) + '</td><td>' + (r.status === 'pending' ? '<span class="faint">' + approverLabel(u) + '</span>' : r.status === 'cancelled' ? '<span class="faint">You</span>' : decidedByName(r)) + '</td><td class="muted">' + (esc(r.note) || '<span class="faint">-</span>') + '</td><td class="actions">' +
             (r.status === 'pending' || (r.status === 'approved' && r.start > todayISO())
               ? (ui.confirmCancel === r.id ? '<span class="row" style="justify-content:flex-end;gap:6px"><span class="muted" style="font-size:13px">Cancel this request?</span><button class="btn danger sm" data-action="cancel-yes" data-id="' + r.id + '">Yes, cancel</button><button class="btn sm" data-action="cancel-no">Keep</button></span>' : '<button class="btn ghost sm" data-action="cancel-ask" data-id="' + r.id + '">Cancel</button>')
               : '') + '</td></tr>').join('') +
@@ -714,72 +734,74 @@ td.actions { white-space: nowrap; text-align: right; }
 
   function holidayYearView(country, editable) {
     const t = todayISO();
-    const list = holidaysOf(country).slice().sort((a, b) => a.date.localeCompare(b.date));
     const months = {};
-    list.forEach(h => { const k = h.date.slice(0, 7); (months[k] = months[k] || []).push(h); });
+    holidaysOf(country).slice().sort((a, b) => a.date.localeCompare(b.date)).forEach(h => { const k = h.date.slice(0, 7); (months[k] = months[k] || []).push(h); });
     const keys = Object.keys(months);
     if (!keys.length) return '<p class="empty">No public holidays added yet.</p>';
     return '<div class="grid-2">' + keys.map(k => '<div class="card"><div class="card-head"><h3>' + fmt(k + '-01', { month: 'long', year: 'numeric' }) + '</h3><span class="faint num">' + months[k].length + '</span></div><div class="list">' +
-      months[k].map(h => '<div class="list-item" style="' + (h.date < t ? 'opacity:.55' : '') + '"><div class="date-chip"><b class="num">' + fromISO(h.date).getDate() + '</b><small>' + fmt(h.date, { weekday: 'short' }) + '</small></div><div class="grow"><b>' + esc(h.name) + '</b>' + (h.date < t ? '<div class="faint">Passed</div>' : isWeekend(h.date) ? '<div class="faint">Weekend</div>' : '') + '</div>' +
+      months[k].map(h => '<div class="list-item" style="' + (h.date < t ? 'opacity:.5' : '') + '"><div class="date-chip"><b class="num">' + fromISO(h.date).getDate() + '</b><small>' + fmt(h.date, { weekday: 'short' }) + '</small></div><div class="grow"><b>' + esc(h.name) + '</b>' + (h.date < t ? '<div class="faint">Passed</div>' : isWeekend(h.date) ? '<div class="faint">Weekend</div>' : '') + '</div>' +
         (editable ? '<button class="btn ghost sm" data-action="hol-remove" data-date="' + h.date + '" data-name="' + esc(h.name) + '">Remove</button>' : '') + '</div>').join('') +
     '</div></div>').join('') + '</div>';
   }
 
   VIEWS.holidays = u => ({
     eyebrow: 'Calendar · ' + COUNTRIES[u.country],
-    title: 'Public holidays ' + new Date().getFullYear(),
-    sub: 'Paid days off for everyone in ' + COUNTRIES[u.country] + '. They do not count against your leave balance.',
+    title: 'Public holidays ' + thisYear(),
+    sub: 'Days off for everyone in ' + COUNTRIES[u.country] + '. They do not use your paid leave.',
     body: holidayYearView(u.country, false)
   });
 
-  VIEWS.account = u => ({
-    eyebrow: 'Account',
-    title: 'Your account',
-    body: '<div class="grid-2">' +
-      '<div class="card"><div class="row" style="margin-bottom:16px"><span class="avatar lg">' + initials(u.name) + '</span><div><h3>' + esc(u.name) + '</h3><span class="muted">' + esc(u.title) + '</span></div></div>' +
-        '<div class="table-wrap"><table><tbody>' +
-          [['User ID', '<span class="mono">' + u.id + '</span>'], ['Access', ROLE_LABEL[u.role]], ['Reports to', u.managerId && emp(u.managerId) ? esc(emp(u.managerId).name) : '<span class="faint">No one</span>'], ['Country', COUNTRIES[u.country]], ['Department', esc(u.department)], ['Grade', u.grade], ['Joined', fmt(u.joinDate)], ['Work email', u.email ? esc(u.email) + ' <span class="faint">(sign-in not connected)</span>' : '<span class="faint">Not set</span>']]
-          .map(([k, v]) => '<tr><td class="muted" style="width:40%">' + k + '</td><td>' + v + '</td></tr>').join('') +
-        '</tbody></table></div></div>' +
-      '<form id="pw-form" class="card stack" novalidate><h3>Change password</h3>' +
-        '<label class="field"><span>Current password</span><input class="input" type="password" id="pw-cur" autocomplete="current-password"></label>' +
-        '<label class="field"><span>New password</span><input class="input" type="password" id="pw-new" autocomplete="new-password"><small>At least 8 characters.</small></label>' +
-        '<label class="field"><span>Confirm new password</span><input class="input" type="password" id="pw-confirm" autocomplete="new-password"></label>' +
-        '<p class="error-text" id="pw-error" hidden></p>' +
-        '<div><button class="btn primary" type="submit">Update password</button></div>' +
-      '</form>' +
-    '</div>' +
-    '<div class="note"><div><b>Prototype data.</b> Everything here is stored in this browser only. <button class="btn ghost sm" data-action="reset-demo">Reset demo data</button></div></div>'
-  });
+  VIEWS.account = u => {
+    const m = u.managerId && emp(u.managerId);
+    const rows = [['Username', '<span class="mono">' + esc(u.id) + '</span>'], ['Access', ROLE_LABEL[u.role]]];
+    if (!u.system) rows.push(['Employment', STATUS_LABEL[u.status] + ' · ' + esc(u.entity)], ['Join date', u.joinDate ? fmt(u.joinDate) : '<span class="faint">Not set</span>'], ['Reports to', m ? esc(m.name) : '<span class="faint">Not set</span>']);
+    return {
+      eyebrow: 'Settings',
+      title: 'Your account',
+      body: '<div class="grid-2">' +
+        '<div class="card"><div class="row" style="margin-bottom:16px">' + avatar(u, 'lg') + '<div><h3>' + esc(u.name) + '</h3><span class="muted">' + (u.system ? 'System account' : subline(u)) + '</span></div></div>' +
+          '<div class="table-wrap"><table><tbody>' + rows.map(([k, v]) => '<tr><td class="muted" style="width:40%">' + k + '</td><td>' + v + '</td></tr>').join('') + '</tbody></table></div></div>' +
+        '<form id="pw-form" class="card stack" novalidate><h3>Change password</h3>' +
+          '<label class="field"><span>Current password</span><input class="input" type="password" id="pw-cur" autocomplete="current-password"></label>' +
+          '<label class="field"><span>New password</span><input class="input" type="password" id="pw-new" autocomplete="new-password"><small>At least 8 characters.</small></label>' +
+          '<label class="field"><span>Confirm new password</span><input class="input" type="password" id="pw-confirm" autocomplete="new-password"></label>' +
+          '<p class="error-text" id="pw-error" hidden></p>' +
+          '<div><button class="btn primary" type="submit">Update password</button></div>' +
+        '</form>' +
+      '</div>' +
+      '<div class="note" style="background:var(--surface-2);border-color:var(--line)"><div><b>Prototype data.</b> Everything here is stored in this browser only. <button class="btn ghost sm" data-action="reset-demo">Reset demo data</button></div></div>'
+    };
+  };
 
-  // ---------- admin views ----------
+  // ---------- approvals / calendar shared ----------
   function whoOff(iso, ids) {
     return state.requests.filter(r => r.status === 'approved' && isOn(r, iso) && (!ids || ids.includes(r.empId))).map(r => ({ r, e: emp(r.empId) }));
   }
 
   function approvalCard(r, compact, u) {
-    const e = emp(r.empId), t = leaveType(r.type), b = balance(e, r.type);
+    const e = emp(r.empId), t = leaveType(r.type);
     const m = e.managerId && emp(e.managerId);
-    const missingDoc = docRequired(t, r.days) && !r.attachment;
     const overriding = u.role === 'admin' && m && m.id !== u.id;
+    let balance = '';
+    if (r.type === 'PL') {
+      const L = paidLedger(e);
+      balance = '<div><small>Paid leave left after</small><span>' + (L.hasJoin ? fmtDays(L.validAt(r.start)) : 'No join date') + '</span></div>';
+    }
     return '<div class="card approval">' +
-      '<div><div class="who"><span class="avatar">' + initials(e.name) + '</span><div><b style="font-family:var(--font-display)">' + esc(e.name) + '</b><div class="faint" style="font-size:13px"><span class="mono">' + e.id + '</span> · ' + esc(e.title) + ' · ' + e.country + '</div></div></div>' +
+      '<div><div class="who">' + avatar(e) + '<div><b style="font-family:var(--font-display)">' + esc(e.name) + '</b><div class="faint" style="font-size:13px"><span class="mono">' + esc(e.id) + '</span> · ' + subline(e) + '</div></div></div>' +
         '<div class="facts num">' +
-          '<div><small>Type</small><span>' + t.name + (t.paid ? '' : ' (unpaid)') + '</span></div>' +
+          '<div><small>Type</small><span>' + typeLabel(r) + '</span></div>' +
           '<div><small>Dates</small><span>' + fmtRange(r.start, r.end) + (r.half !== 'none' ? ' · ' + (r.half === 'am' ? 'AM' : 'PM') : '') + '</span></div>' +
-          '<div><small>Working days</small><span>' + r.days + '</span></div>' +
-          (b.quota == null ? '' : '<div><small>Balance after approval</small><span>' + (b.quota - b.used - r.days) + ' of ' + b.quota + '</span></div>') +
-          '<div><small>Leader</small><span>' + (m ? esc(m.name) : 'None, People Ops approves') + '</span></div>' +
+          '<div><small>Working days</small><span>' + fmtNum(r.days) + '</span></div>' + balance +
+          '<div><small>Leader</small><span>' + (m ? esc(m.name) : 'Not set, People Ops') + '</span></div>' +
           '<div><small>Submitted</small><span>' + fmt(r.createdAt) + '</span></div>' +
         '</div>' +
         (compact ? '' : (r.reason ? '<blockquote>' + esc(r.reason) + '</blockquote>' : '') +
-        '<div class="row" style="margin-top:12px">' + (r.attachment ? '<span class="tag">' + esc(r.attachment) + '</span>' : '') + (missingDoc ? '<span class="pill rejected">Medical certificate missing</span>' : '') + (overriding ? '<span class="faint" style="font-size:13px">You are approving on behalf of ' + esc(m.name.split(' ')[0]) + '.</span>' : '') + '</div>') +
+        '<div class="row" style="margin-top:12px">' + (r.attachment ? '<span class="tag">Surat sakit: ' + esc(r.attachment) + '</span>' : '') + (overriding ? '<span class="faint" style="font-size:13px">You are approving on behalf of ' + esc(m.name.split(' ')[0]) + '.</span>' : '') + '</div>') +
       '</div>' +
       (canApprove(u, r) ? '<div class="btns"><button class="btn ok sm" data-action="approve" data-id="' + r.id + '">Approve</button><button class="btn danger sm" data-action="reject" data-id="' + r.id + '">Reject</button></div>' : '<div></div>') +
     '</div>';
   }
-
-  const decidedByName = r => r.decidedBy && emp(r.decidedBy) ? esc(emp(r.decidedBy).name) : '-';
 
   function approvalsBody(u, scopeIds) {
     const inScope = r => r.empId !== u.id && (!scopeIds || scopeIds.includes(r.empId));
@@ -792,7 +814,7 @@ td.actions { white-space: nowrap; text-align: right; }
       (ui.approvalsTab === 'pending'
         ? (pending.length ? '<div class="stack">' + pending.map(r => approvalCard(r, false, u)).join('') + '</div>' : '<div class="card"><p class="empty">All caught up. No requests waiting.</p></div>')
         : '<div class="card"><div class="table-wrap"><table><thead><tr><th>Ref</th><th>Employee</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Decided by</th><th>Note</th></tr></thead><tbody>' +
-            (decided.length ? decided.map(r => { const e = emp(r.empId); return '<tr><td class="mono">' + r.id + '</td><td><b>' + esc(e.name) + '</b><div class="faint mono" style="font-size:12px">' + e.id + '</div></td><td>' + leaveType(r.type).name + '</td><td class="num">' + fmtRange(r.start, r.end) + '</td><td class="num">' + r.days + '</td><td>' + statusPill(r.status) + '</td><td>' + (r.status === 'cancelled' ? '<span class="faint">Employee</span>' : decidedByName(r)) + '</td><td class="muted">' + (esc(r.note) || '<span class="faint">-</span>') + '</td></tr>'; }).join('') : '<tr><td colspan="8" class="empty">Nothing decided yet.</td></tr>') +
+            (decided.length ? decided.map(r => { const e = emp(r.empId); return '<tr><td class="mono">' + r.id + '</td><td><b>' + esc(e.name) + '</b><div class="faint mono" style="font-size:12px">' + esc(e.id) + '</div></td><td>' + typeLabel(r) + '</td><td class="num">' + fmtRange(r.start, r.end) + '</td><td class="num">' + fmtNum(r.days) + '</td><td>' + statusPill(r.status) + '</td><td>' + (r.status === 'cancelled' ? '<span class="faint">Employee</span>' : decidedByName(r)) + '</td><td class="muted">' + (esc(r.note) || '<span class="faint">-</span>') + '</td></tr>'; }).join('') : '<tr><td colspan="8" class="empty">Nothing decided yet.</td></tr>') +
           '</tbody></table></div></div>');
   }
 
@@ -808,24 +830,25 @@ td.actions { white-space: nowrap; text-align: right; }
       const d = addDays(gridStart, i);
       const out = d.slice(0, 7) !== ui.calMonth;
       const hols = countries.map(c => { const h = holidayOn(d, c); return h ? (countries.length > 1 ? c + ' · ' : '') + h.name : null; }).filter(Boolean);
-      const people = reqs.filter(r => isOn(r, d));
+      const peopleOff = reqs.filter(r => isOn(r, d));
       cells += '<div class="day' + (out ? ' out' : '') + (isWeekend(d) ? ' weekend' : '') + (d === t ? ' today' : '') + '"><span class="d num">' + fromISO(d).getDate() + '</span>' +
         hols.map(h => '<span class="hol">' + esc(h) + '</span>').join('') +
-        people.map(r => { const e = emp(r.empId); return '<span class="who' + (r.status === 'pending' ? ' pend' : '') + '" title="' + esc(e.name) + ' · ' + leaveType(r.type).name + ' (' + r.status + ')">' + esc(e.name.split(' ')[0]) + ' · ' + r.type + '</span>'; }).join('') +
+        peopleOff.map(r => { const e = emp(r.empId); return '<span class="who' + (r.status === 'pending' ? ' pend' : '') + '" title="' + esc(e.name) + ' · ' + leaveType(r.type).name + ' (' + r.status + ')">' + esc(e.name.split(' ')[0]) + ' · ' + r.type + '</span>'; }).join('') +
       '</div>';
     }
     return '<div class="row" style="justify-content:space-between"><div class="seg">' + [['all', 'All countries'], ['ID', 'Indonesia'], ['MY', 'Malaysia']].map(([k, l]) => '<button data-cal-country="' + k + '" class="' + (ui.calCountry === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
       '<div class="legend"><span><i></i>Approved</span><span><i class="pend"></i>Pending</span><span><i class="hol"></i>Public holiday</span></div></div>' +
       '<div class="cal-wrap"><div class="cal">' + ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(x => '<div class="dow">' + x + '</div>').join('') + cells + '</div></div>';
   }
-  const CAL_ACTIONS = '<button class="btn sm" data-action="cal-prev" aria-label="Previous month">Previous</button><button class="btn sm" data-action="cal-today">This month</button><button class="btn sm" data-action="cal-next" aria-label="Next month">Next</button>';
+  const CAL_ACTIONS = '<button class="btn sm" data-action="cal-prev">Previous</button><button class="btn sm" data-action="cal-today">This month</button><button class="btn sm" data-action="cal-next">Next</button>';
   const calTitle = () => fmt((ui.calMonth || todayISO().slice(0, 7)) + '-01', { month: 'long', year: 'numeric' });
+  const CODES = 'Codes: PL paid leave, SL sick leave, OL other leave.';
 
   // ---------- leader views ----------
   VIEWS['t-approvals'] = u => ({
     eyebrow: 'My team · Approvals',
     title: 'Team approvals',
-    sub: 'Leave requests from people who report directly to you. Approving deducts the working days from their balance. Rejecting needs a short reason they will see.',
+    sub: 'Leave requests from people who report directly to you. Rejecting needs a short reason they will see.',
     body: approvalsBody(u, directReports(u.id).map(e => e.id))
   });
 
@@ -837,18 +860,18 @@ td.actions { white-space: nowrap; text-align: right; }
       eyebrow: 'My team · ' + team.length + ' direct ' + (team.length === 1 ? 'report' : 'reports'),
       title: 'Team members',
       sub: 'Your reporting line is set by People Ops. Ask them if someone is missing or should move to another leader.',
-      body: '<div class="card"><div class="table-wrap"><table><thead><tr><th>Member</th><th>Grade</th><th>Today</th><th>Annual left</th><th>Sick used</th><th>Next time off</th><th>Pending</th></tr></thead><tbody>' +
+      body: '<div class="card"><div class="table-wrap"><table><thead><tr><th>Member</th><th>Joined</th><th>Today</th><th>Paid leave left</th><th>Sick taken</th><th>Next time off</th><th>Pending</th></tr></thead><tbody>' +
         (team.length ? team.map(e => {
-          const al = balance(e, 'AL'), sl = balance(e, 'SL');
+          const L = paidLedger(e);
           const next = state.requests.filter(r => r.empId === e.id && r.status === 'approved' && r.end >= t).sort((a, b) => a.start.localeCompare(b.start))[0];
           const pend = state.requests.filter(r => r.empId === e.id && r.status === 'pending').length;
-          return '<tr><td><div class="row" style="flex-wrap:nowrap"><span class="avatar">' + initials(e.name) + '</span><div><b>' + esc(e.name) + '</b><div class="faint" style="font-size:13px">' + esc(e.title) + ' · ' + e.country + (e.role === 'leader' ? ' · Leader of ' + directReports(e.id).length : '') + '</div></div></div></td>' +
-            '<td class="num">' + e.grade + '</td>' +
+          return '<tr><td><div class="row" style="flex-wrap:nowrap">' + avatar(e) + '<div><b>' + esc(e.name) + '</b><div class="faint" style="font-size:13px">' + subline(e) + '</div></div></div></td>' +
+            '<td class="num">' + (e.joinDate ? fmt(e.joinDate) : '<span class="faint">Not set</span>') + '</td>' +
             '<td>' + (!e.active ? '<span class="pill inactive">Deactivated</span>' : offIds.includes(e.id) ? '<span class="pill pending">Off</span>' : '<span class="pill active">In</span>') + '</td>' +
-            '<td class="num">' + al.available + ' / ' + al.quota + '</td><td class="num">' + sl.used + '</td>' +
+            '<td class="num">' + (L.hasJoin ? fmtNum(L.available) : '-') + '</td><td class="num">' + fmtNum(takenThisYear(e, 'SL')) + '</td>' +
             '<td class="num">' + (next ? leaveType(next.type).name + '<div class="faint">' + fmtRange(next.start, next.end) + '</div>' : '<span class="faint">-</span>') + '</td>' +
             '<td>' + (pend ? '<button class="btn ghost sm" data-nav="t-approvals">' + pend + ' to review</button>' : '<span class="faint">-</span>') + '</td></tr>';
-        }).join('') : '<tr><td colspan="7" class="empty">No one reports to you yet.</td></tr>') +
+        }).join('') : '<tr><td colspan="7" class="empty">No one reports to you yet. People Ops sets this in Reporting line.</td></tr>') +
       '</tbody></table></div></div>'
     };
   };
@@ -856,7 +879,7 @@ td.actions { white-space: nowrap; text-align: right; }
   VIEWS['t-calendar'] = u => ({
     eyebrow: 'My team · Calendar',
     title: calTitle(),
-    sub: 'You and your direct reports. Leave codes: AL annual, SL sick, SP special, MT maternity, UL unpaid.',
+    sub: 'You and your direct reports. ' + CODES,
     actions: CAL_ACTIONS,
     body: calendarBody([u.id].concat(directReports(u.id).map(e => e.id)))
   });
@@ -865,33 +888,34 @@ td.actions { white-space: nowrap; text-align: right; }
   VIEWS['a-overview'] = u => {
     const t = todayISO();
     const pending = state.requests.filter(r => r.status === 'pending' && r.empId !== u.id).sort((a, b) => a.start.localeCompare(b.start));
-    const noLeader = pending.filter(r => !emp(r.empId).managerId);
     const off = whoOff(t);
-    const week = new Set(state.requests.filter(r => r.status === 'approved' && r.start <= addDays(t, 7) && r.end > t).map(r => r.empId));
-    const active = state.employees.filter(e => e.active).length;
-    const leaders = state.employees.filter(e => e.active && e.role === 'leader').length;
-    const stat = (label, value, sub) => '<div class="card stat"><span class="label">' + label + '</span><div class="big num grad-text">' + value + '</div><div class="muted" style="font-size:13.5px;margin-top:6px">' + sub + '</div></div>';
+    const active = people().filter(e => e.active);
+    const noJoin = active.filter(e => !e.joinDate).length;
+    const noLeader = active.filter(e => !e.managerId && e.role === 'reportee').length;
+    const stat = (label, value, sub, warn) => '<div class="card tile"><span class="label">' + label + '</span><div class="big num' + (warn ? ' accent' : '') + '">' + value + '</div><div class="of">' + sub + '</div></div>';
     return {
       eyebrow: 'People Ops · ' + fmt(t, { weekday: 'long', day: 'numeric', month: 'long' }),
       title: 'Attendance dashboard',
-      actions: '<button class="btn" data-action="add-emp">Create account</button><button class="btn primary" data-nav="a-approvals">All approvals</button>',
-      body: '<section class="grid-4">' +
-          stat('Waiting for approval', pending.length, noLeader.length + ' with no leader, People Ops only') +
+      actions: '<button class="btn" data-nav="a-employees">Employees &amp; access</button><button class="btn primary" data-nav="a-approvals">All approvals</button>',
+      body: (people().length ? '' : '<div class="card dark row" style="justify-content:space-between"><div><span class="label">Get started</span><h3 style="margin-top:6px">Import the master data file to create employee accounts</h3></div><button class="btn" data-nav="a-employees">Go to Employees &amp; access</button></div>') +
+        '<section class="grid-4">' +
+          stat('Waiting for approval', pending.length, 'across the company') +
           stat('Off today', off.length, 'approved leave only') +
-          stat('Off in the next 7 days', week.size, 'people with approved leave') +
-          stat('Active accounts', active, leaders + ' leaders · ' + state.employees.filter(e => !e.active).length + ' deactivated') +
+          stat('Missing join date', noJoin, noJoin ? 'these people earn no paid leave yet' : 'everyone is set', noJoin > 0) +
+          stat('No leader', noLeader, noLeader ? 'reportees whose leave only People Ops can approve' : 'every reportee has a leader', noLeader > 0) +
         '</section>' +
+        ((noJoin || noLeader) ? '<div class="note warn"><div><b>Finish the master data.</b> ' + (noJoin ? noJoin + ' people have no join date. ' : '') + (noLeader ? noLeader + ' reportees have no leader. ' : '') + '<button class="btn ghost sm" data-action="goto-missing">Show them</button></div></div>' : '') +
         '<section class="split">' +
           '<div class="stack"><div class="card-head" style="margin:0"><h3 style="font-size:20px">Waiting across the company</h3><button class="btn ghost sm" data-nav="a-approvals">See all</button></div>' +
             (pending.length ? pending.slice(0, 3).map(r => approvalCard(r, true, u)).join('') : '<div class="card"><p class="empty">All caught up. No requests waiting.</p></div>') +
           '</div>' +
           '<div class="stack">' +
             '<div class="card"><div class="card-head"><h3>Off today</h3><span class="faint">' + fmtShort(t) + '</span></div>' +
-              (off.length ? '<div class="list">' + off.map(({ r, e }) => '<div class="list-item"><span class="avatar">' + initials(e.name) + '</span><div class="grow"><b>' + esc(e.name) + '</b><div class="faint">' + leaveType(r.type).name + ' · back ' + fmtShort(nextWorkday(addDays(r.end, 1))) + '</div></div><span class="tag">' + e.country + '</span></div>').join('') + '</div>' : '<p class="empty">Everyone is in today.</p>') +
+              (off.length ? '<div class="list">' + off.map(({ r, e }) => '<div class="list-item">' + avatar(e) + '<div class="grow"><b>' + esc(e.name) + '</b><div class="faint">' + leaveType(r.type).name + ' · back ' + fmtShort(nextWorkday(addDays(r.end, 1))) + '</div></div></div>').join('') + '</div>' : '<p class="empty">Everyone is in today.</p>') +
             '</div>' +
-            '<div class="card hl"><span class="label">Next public holiday</span>' +
-              ['ID', 'MY'].map(c => { const h = holidaysOf(c).filter(x => x.date >= t).sort((a, b) => a.date.localeCompare(b.date))[0]; return '<div style="margin-top:10px"><b style="font-family:var(--font-display)">' + COUNTRIES[c] + '</b><div class="muted">' + (h ? esc(h.name) + ' · ' + fmtShort(h.date) : 'None left this year') + '</div></div>'; }).join('') +
-            '</div>' +
+            '<div class="card hl"><span class="label">Headcount</span><div class="row" style="margin-top:10px;gap:22px">' +
+              [['Full time', active.filter(e => e.status === 'FT').length], ['Part time', active.filter(e => e.status === 'PT').length], ['Leaders', active.filter(e => e.role === 'leader').length]].map(([k, v]) => '<div><div style="font-family:var(--font-display);font-weight:800;font-size:28px" class="num">' + v + '</div><div class="muted" style="font-size:13px">' + k + '</div></div>').join('') +
+            '</div></div>' +
           '</div>' +
         '</section>'
     };
@@ -900,75 +924,111 @@ td.actions { white-space: nowrap; text-align: right; }
   VIEWS['a-approvals'] = u => ({
     eyebrow: 'People Ops · Approvals',
     title: 'All approvals',
-    sub: 'Every pending request in the company. Leaders normally approve their own reportees. As HR admin you can approve or reject any request except your own.',
+    sub: 'Every pending request. Leaders normally approve their own reportees. As HR admin you can approve or reject any request except your own.',
     body: approvalsBody(u, null)
   });
 
-  VIEWS['a-employees'] = u => {
+  const EMP_FILTERS = [['all', 'All'], ['FT', 'Full time'], ['PT', 'Part time'], ['leaders', 'Leaders'], ['nojoin', 'No join date'], ['noleader', 'No leader']];
+  function empMatches(e) {
     const q = ui.empQuery.trim().toLowerCase();
-    const list = state.employees.filter(e => !q || (e.name + ' ' + e.id + ' ' + e.department + ' ' + e.email + ' ' + e.role).toLowerCase().includes(q));
+    if (q && !(e.name + ' ' + e.id + ' ' + e.entity + ' ' + ROLE_LABEL[e.role]).toLowerCase().includes(q)) return false;
+    switch (ui.empFilter) {
+      case 'FT': case 'PT': return e.status === ui.empFilter;
+      case 'leaders': return e.role !== 'reportee';
+      case 'nojoin': return !e.joinDate;
+      case 'noleader': return !e.managerId && e.role === 'reportee';
+    }
+    return true;
+  }
+
+  VIEWS['a-employees'] = u => {
+    const all = people();
+    const list = all.filter(empMatches);
     return {
-      eyebrow: 'People Ops · Access',
+      eyebrow: 'People Ops · Master data',
       title: 'Employees & access',
-      sub: 'Create sign-in accounts and set each person\'s access level and leader. Each new account gets a user ID and a one-time temporary password.',
-      actions: '<button class="btn primary" data-action="add-emp">Create account</button>',
-      body: '<div class="note"><div><b>Email sign-in is not connected yet.</b> Share the user ID and temporary password with the employee directly, for example over Slack or in person. They set their own password the first time they sign in.</div></div>' +
-        '<div class="card"><div class="card-head"><label class="field" style="width:min(340px,100%)"><span class="faint" style="font-weight:500">Search</span><input class="input" id="emp-q" placeholder="Name, user ID, department or access" value="' + esc(ui.empQuery) + '"></label><span class="faint num">' + list.length + ' of ' + state.employees.length + '</span></div>' +
-        '<div class="table-wrap"><table><thead><tr><th>Employee</th><th>User ID</th><th>Access</th><th>Reports to</th><th>Grade</th><th>Annual left</th><th>Status</th><th></th></tr></thead><tbody>' +
-          list.map(e => { const al = balance(e, 'AL'), m = e.managerId && emp(e.managerId); return '<tr>' +
-            '<td><div class="row" style="flex-wrap:nowrap"><span class="avatar">' + initials(e.name) + '</span><div><b>' + esc(e.name) + '</b><div class="faint" style="font-size:13px">' + esc(e.title) + ' · ' + esc(e.department) + ' · ' + e.country + '</div></div></div></td>' +
-            '<td class="mono">' + e.id + (e.mustChange ? '<div class="faint" style="font-size:11.5px;font-family:var(--font-body)">Temporary password</div>' : '') + '</td>' +
-            '<td>' + (e.role === 'reportee' ? 'Reportee' : '<span class="tag">' + ROLE_LABEL[e.role] + '</span>') + (directReports(e.id).length ? '<div class="faint" style="font-size:12.5px">' + directReports(e.id).length + ' direct reports</div>' : '') + '</td>' +
-            '<td>' + (m ? esc(m.name) : '<span class="faint">No one</span>') + '</td>' +
-            '<td class="num">' + e.grade + '</td>' +
-            '<td class="num">' + al.available + ' / ' + al.quota + '</td>' +
-            '<td>' + (e.active ? '<span class="pill active">Active</span>' : '<span class="pill inactive">Deactivated</span>') + '</td>' +
-            '<td class="actions"><button class="btn ghost sm" data-action="edit-emp" data-id="' + e.id + '">Edit</button><button class="btn ghost sm" data-action="reset-pw" data-id="' + e.id + '">Reset password</button>' +
-              (e.id === u.id ? '' : '<button class="btn ghost sm" data-action="toggle-active" data-id="' + e.id + '">' + (e.active ? 'Deactivate' : 'Reactivate') + '</button>') + '</td>' +
-          '</tr>'; }).join('') +
+      sub: 'Set each person\'s join date and leader here, or fill them in the master data file and import it. Join date drives paid leave. The leader approves their leave.',
+      actions: '<label class="btn" for="import-file">Import master data</label><input type="file" id="import-file" accept=".xlsx,.xls,.csv" hidden><button class="btn primary" data-action="add-emp">Create account</button>',
+      body: '<div class="note"><div><b>Email sign-in is not connected yet.</b> Each person signs in with a username and a temporary password. Share them directly, for example over Slack. They set their own password at first sign-in.</div></div>' +
+        '<div class="card"><div class="card-head"><div class="row" style="flex:1"><input class="input" id="emp-q" style="max-width:300px" placeholder="Search name or username" value="' + esc(ui.empQuery) + '" aria-label="Search employees">' +
+          '<div class="seg">' + EMP_FILTERS.map(([k, l]) => '<button data-emp-filter="' + k + '" class="' + (ui.empFilter === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div></div><span class="faint num">' + list.length + ' of ' + all.length + '</span></div>' +
+        '<div class="table-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>FT / PT</th><th>Join date</th><th>Direct report to</th><th>Access</th><th>Paid leave</th><th>Status</th><th></th></tr></thead><tbody>' +
+          (list.length ? list.map(e => { const L = paidLedger(e); return '<tr>' +
+            '<td><div class="row" style="flex-wrap:nowrap">' + avatar(e) + '<div><b>' + esc(e.name) + '</b>' + (e.entity === 'GSA' ? '<div class="faint" style="font-size:12.5px">GSA</div>' : '') + '</div></div></td>' +
+            '<td class="mono">' + esc(e.id) + (e.mustChange ? '<div style="font-family:var(--font-body);font-size:12px">' + (ui.revealed === e.id ? '<span class="mono" style="user-select:all">' + esc(e.password) + '</span> <button class="btn ghost sm" data-action="hide-pw">Hide</button>' : '<span class="faint">Temporary password</span> <button class="btn ghost sm" data-action="reveal-pw" data-id="' + esc(e.id) + '">Show</button>') + '</div>' : '') + '</td>' +
+            '<td>' + e.status + '</td>' +
+            '<td><input class="input sm' + (e.joinDate ? '' : ' missing') + '" type="date" data-join="' + esc(e.id) + '" id="join-' + esc(e.id) + '" value="' + e.joinDate + '" aria-label="Join date of ' + esc(e.name) + '"></td>' +
+            '<td><select class="input sm' + (e.managerId || e.role !== 'reportee' ? '' : ' missing') + '" data-org="' + esc(e.id) + '" id="mgr-' + esc(e.id) + '" aria-label="Leader of ' + esc(e.name) + '">' + leaderOptions(e.id, e.managerId, 'Not set') + '</select></td>' +
+            '<td>' + (e.role === 'reportee' ? 'Reportee' : '<span class="tag">' + ROLE_LABEL[e.role] + '</span>') + '</td>' +
+            '<td class="num">' + (L.hasJoin ? fmtNum(L.available) + ' days' : '<span class="faint">-</span>') + '</td>' +
+            '<td>' + (e.active ? '<span class="pill active">Active</span>' : '<span class="pill inactive">Off</span>') + '</td>' +
+            '<td class="actions"><button class="btn ghost sm" data-action="edit-emp" data-id="' + esc(e.id) + '">Edit</button><button class="btn ghost sm" data-action="reset-pw" data-id="' + esc(e.id) + '">Reset password</button>' +
+              (e.id === u.id ? '' : '<button class="btn ghost sm" data-action="toggle-active" data-id="' + esc(e.id) + '">' + (e.active ? 'Deactivate' : 'Reactivate') + '</button>') + '</td>' +
+          '</tr>'; }).join('') : '<tr><td colspan="9" class="empty">' + (all.length ? 'No one matches.' : 'No employees yet. Import the master data file or create an account.') + '</td></tr>') +
         '</tbody></table></div></div>'
     };
   };
 
   function orgNode(e) {
-    const kids = directReports(e.id);
-    return '<div class="org-item"><div class="org-node' + (kids.length ? ' leader' : '') + '" style="' + (e.active ? '' : 'opacity:.55') + '">' +
-      '<span class="avatar">' + initials(e.name) + '</span>' +
+    const kids = directReports(e.id).filter(k => !k.system);
+    return '<div class="org-item"><div class="org-node' + (e.role !== 'reportee' ? ' leader' : '') + '" style="' + (e.active ? '' : 'opacity:.5') + '">' +
+      avatar(e) +
       '<div class="grow"><b>' + esc(e.name) + '</b> ' + (e.role === 'reportee' ? '' : '<span class="tag">' + ROLE_LABEL[e.role] + '</span>') +
-        '<div class="faint" style="font-size:13px">' + esc(e.title) + ' · ' + e.grade + ' · ' + e.country + (kids.length ? ' · approves for ' + kids.length : '') + (e.active ? '' : ' · deactivated') + '</div></div>' +
-      '<label class="row" style="gap:8px;flex-wrap:nowrap"><span class="faint" style="font-size:13px">Reports to</span><select class="input" data-org="' + e.id + '" id="org-' + e.id + '" aria-label="Leader of ' + esc(e.name) + '">' + leaderOptions(e.id, e.managerId) + '</select></label>' +
+        '<div class="faint" style="font-size:13px">' + STATUS_LABEL[e.status] + (e.entity === 'GSA' ? ' · GSA' : '') + (kids.length ? ' · approves for ' + kids.length : '') + (e.active ? '' : ' · deactivated') + '</div></div>' +
+      '<label class="row" style="gap:8px;flex-wrap:nowrap"><span class="faint" style="font-size:13px">Reports to</span><select class="input" data-org="' + esc(e.id) + '" id="org-' + esc(e.id) + '" aria-label="Leader of ' + esc(e.name) + '">' + leaderOptions(e.id, e.managerId, 'No one') + '</select></label>' +
     '</div>' + (kids.length ? '<div class="org-children">' + kids.map(orgNode).join('') + '</div>' : '') + '</div>';
   }
 
   VIEWS['a-org'] = () => {
-    const roots = state.employees.filter(e => !e.managerId || !emp(e.managerId));
+    const all = people();
+    const leaders = all.filter(e => e.role !== 'reportee' && (!e.managerId || !emp(e.managerId)));
+    const unassigned = all.filter(e => e.role === 'reportee' && (!e.managerId || !emp(e.managerId)));
     return {
       eyebrow: 'People Ops · Reporting line',
       title: 'Reporting line',
       sub: 'Who reports to whom. A person\'s leader approves their leave, and People Ops can always approve too. Only leaders and HR admins can have reportees.',
       body: '<div class="legend"><span><span class="tag">Leader</span>Approves leave for direct reports</span><span><span class="tag">HR admin</span>Approves anyone, manages accounts</span><span>Reportee: requests leave only</span></div>' +
-        '<div class="org">' + roots.map(orgNode).join('') + '</div>'
+        '<div class="org">' + leaders.map(orgNode).join('') + '</div>' +
+        (unassigned.length ? '<div class="stack"><div class="card-head" style="margin:0"><h3>No leader yet <span class="faint num" style="font-weight:600">(' + unassigned.length + ')</span></h3><span class="faint" style="font-size:13.5px">Pick a leader for each person. Until then People Ops approves their leave.</span></div><div class="org">' + unassigned.map(orgNode).join('') + '</div></div>' : '')
     };
   };
 
   VIEWS['a-calendar'] = () => ({
     eyebrow: 'People Ops · Calendar',
     title: calTitle(),
-    sub: 'Who is off across the company, by day. Leave codes: AL annual, SL sick, SP special, MT maternity, UL unpaid.',
+    sub: 'Who is off across the company, by day. ' + CODES,
     actions: CAL_ACTIONS,
     body: calendarBody(null)
   });
 
-  VIEWS['a-policy'] = () => ({
-    eyebrow: 'People Ops · Policy',
-    title: 'Leave policy',
-    sub: 'Yearly quotas per country, in working days. Balances reset on 1 January.',
-    body: '<form id="policy-form" class="card stack" novalidate><div class="table-wrap"><table><thead><tr><th>Leave type</th><th>Paid</th><th>Indonesia</th><th>Malaysia</th><th>Document</th></tr></thead><tbody>' +
-      state.leaveTypes.map(t => '<tr><td><b>' + t.name + '</b> <span class="faint mono">' + t.code + '</span>' + (t.hint ? '<div class="faint" style="font-size:13px">' + t.hint + '</div>' : '') + '</td><td>' + (t.paid ? 'Paid' : 'Unpaid') + '</td>' +
-        (t.quota ? ['ID', 'MY'].map(c => '<td><input class="input num" style="width:90px" type="number" min="0" max="365" id="q-' + t.code + '-' + c + '" value="' + t.quota[c] + '"></td>').join('') : '<td class="faint">No quota</td><td class="faint">No quota</td>') +
-        '<td>' + ({ none: '<span class="faint">Not needed</span>', over1: 'From day 2 (MC)', always: 'Always' })[t.docRule] + '</td></tr>').join('') +
-      '</tbody></table></div><div class="row"><button class="btn primary" type="submit">Save quotas</button><span class="faint" style="font-size:13px">Changes apply to everyone in that country straight away.</span></div></form>'
-  });
+  VIEWS['a-policy'] = () => {
+    const p = state.policy;
+    const y = thisYear();
+    let tl = '';
+    for (let m = 0; m < 12; m++) tl += '<div><i></i>' + new Date(y - 1, m, 1).toLocaleDateString('en-GB', { month: 'short' }) + '</div>';
+    let tl2 = '';
+    for (let m = 0; m < 12; m++) tl2 += '<div><i class="y2"></i>' + new Date(y, m, 1).toLocaleDateString('en-GB', { month: 'short' }) + '</div>';
+    return {
+      eyebrow: 'People Ops · Policy',
+      title: 'Leave policy',
+      sub: 'Paid leave builds up every month from the join date. Sick leave needs a surat sakit. Other leave must say what it is for.',
+      body: '<form id="policy-form" class="card stack" novalidate><h3>Paid leave accrual</h3>' +
+          '<div class="form-grid">' +
+            '<label class="field"><span>Days earned per full month of service</span><input class="input num" type="number" min="0" max="5" step="0.5" id="pol-per" value="' + p.perMonth + '"><small>Counted from the join date. Someone who joined on 10 Mar earns on 10 Apr, 10 May, and so on.</small></label>' +
+            '<label class="field"><span>Earned days stay valid for (calendar years)</span><input class="input num" type="number" min="1" max="5" step="1" id="pol-valid" value="' + p.validYears + '"><small>2 means days earned in ' + (y - 1) + ' can be used until 31 Dec ' + y + ', then expire.</small></label>' +
+          '</div>' +
+          '<div><span class="label">Example with the current setting</span>' +
+            '<p class="muted" style="margin-top:6px;font-size:14px">Each block is one day earned. Days earned in ' + (y - 1) + ' (purple) carry over into ' + y + ' and expire on 31 Dec ' + (y - 2 + p.validYears) + '. Days earned in ' + y + ' (black) expire on 31 Dec ' + (y - 1 + p.validYears) + '. The oldest days are used first.</p>' +
+            '<div class="timeline">' + tl + '</div><div class="timeline">' + tl2 + '</div></div>' +
+          '<div class="row"><button class="btn primary" type="submit">Save policy</button><span class="faint" style="font-size:13px">Balances update for everyone straight away.</span></div>' +
+        '</form>' +
+        '<div class="card"><div class="table-wrap"><table><thead><tr><th>Leave type</th><th>Uses paid balance</th><th>Required</th></tr></thead><tbody>' +
+          '<tr><td><b>Paid leave</b> <span class="faint mono">PL</span></td><td>Yes</td><td>Enough earned days on the first day of leave</td></tr>' +
+          '<tr><td><b>Sick leave</b> <span class="faint mono">SL</span></td><td>No</td><td>Surat sakit (doctor\'s note) attached</td></tr>' +
+          '<tr><td><b>Other leave</b> <span class="faint mono">OL</span></td><td>No</td><td>Employee specifies what the leave is for</td></tr>' +
+        '</tbody></table></div></div>'
+    };
+  };
 
   VIEWS['a-holidays'] = () => ({
     eyebrow: 'People Ops · Calendar',
@@ -980,55 +1040,138 @@ td.actions { white-space: nowrap; text-align: right; }
         '<label class="field"><span>Holiday name</span><input class="input" id="hol-name" placeholder="e.g. Cuti bersama Idul Fitri"></label>' +
         '<button class="btn primary" type="submit">Add to ' + COUNTRIES[ui.holCountry] + '</button>' +
       '</div><p class="error-text" id="hol-error" hidden style="margin-top:10px"></p></form>' +
-      '<div class="note warn"><div><b>Sample dates.</b> Check the 2026 list against the official SKB (Indonesia) and the federal gazette (Malaysia) before go-live. State holidays in Malaysia are not included.</div></div>' +
+      '<div class="note warn"><div><b>Sample dates.</b> Check the ' + thisYear() + ' list against the official SKB (Indonesia) and the federal gazette (Malaysia) before go-live.</div></div>' +
       holidayYearView(ui.holCountry, true)
   });
+
+  // ---------- import ----------
+  function cellISO(v) {
+    if (v == null || v === '') return '';
+    if (v instanceof Date) return toISO(v);
+    if (typeof v === 'number') { const d = new Date(Math.round((v - 25569) * 86400000)); return toISO(new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); }
+    const s = String(v).trim();
+    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return m[1] + '-' + pad(+m[2]) + '-' + pad(+m[3]);
+    m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+    if (m) return m[3] + '-' + pad(+m[2]) + '-' + pad(+m[1]);
+    return 'invalid';
+  }
+
+  function importRows(rows) {
+    const pick = (row, ...names) => { const k = Object.keys(row).find(h => names.includes(h.trim().toLowerCase())); return k == null ? '' : row[k]; };
+    const result = { created: [], updated: 0, join: 0, leaders: 0, warnings: [] };
+    const pendingLeaders = [];
+    rows.forEach((row, i) => {
+      const name = String(pick(row, 'name') || '').replace(/\s+/g, ' ').trim();
+      if (!name || /^total$/i.test(name)) return;
+      const statusRaw = String(pick(row, 'ft / pt', 'ft/pt', 'status', 'employment status') || '').trim();
+      const status = /^pt$|part/i.test(statusRaw) ? 'PT' : 'FT';
+      const entity = /gsa/i.test(String(pick(row, 'entity') || '')) || /\(gsa\)/i.test(name) ? 'GSA' : 'Swing';
+      const accessRaw = String(pick(row, 'access') || '').trim().toLowerCase();
+      let username = String(pick(row, 'username') || '').trim().toLowerCase();
+      let e = (username && emp(username)) || state.employees.find(x => !x.system && x.name.toLowerCase() === name.toLowerCase());
+      if (!e) {
+        username = username || makeUsername(name, entity);
+        if (!username || emp(username)) { result.warnings.push('Row ' + (i + 2) + ': could not make a unique username for ' + name + '.'); return; }
+        const pw = String(pick(row, 'temporary password', 'password') || '').trim() || generatePassword();
+        e = { id: username, name, status, entity, country: 'ID', joinDate: '', managerId: null, role: 'reportee', password: pw, mustChange: true, active: true };
+        state.employees.push(e);
+        result.created.push(e.id);
+      } else {
+        result.updated++;
+        Object.assign(e, { name, status, entity });
+      }
+      if (accessRaw) e.role = accessRaw.startsWith('hr') || accessRaw === 'admin' ? 'admin' : accessRaw.startsWith('leader') ? 'leader' : 'reportee';
+      const join = cellISO(pick(row, 'join date', 'joined', 'join_date'));
+      if (join === 'invalid') result.warnings.push(name + ': join date "' + pick(row, 'join date') + '" is not a date. Use YYYY-MM-DD.');
+      else if (join) { e.joinDate = join; result.join++; }
+      const leaderName = String(pick(row, 'direct report to', 'reports to', 'leader') || '').trim();
+      if (leaderName) pendingLeaders.push([e, leaderName]);
+    });
+    pendingLeaders.forEach(([e, leaderName]) => {
+      const key = leaderName.toLowerCase();
+      const candidates = state.employees.filter(x => !x.system && x.id !== e.id && (x.name.toLowerCase() === key || x.name.toLowerCase().startsWith(key + ' ')));
+      const leader = candidates.find(x => x.entity === 'Swing') || candidates[0];
+      if (!leader) { result.warnings.push(e.name + ': leader "' + leaderName + '" is not in the list.'); return; }
+      if (isBelow(leader.id, e.id)) { result.warnings.push(e.name + ': ' + leader.name + ' already reports to them, so this would make a loop. Skipped.'); return; }
+      if (leader.role === 'reportee') leader.role = 'leader';
+      e.managerId = leader.id; result.leaders++;
+    });
+    return result;
+  }
+
+  function handleImport(file) {
+    if (typeof XLSX === 'undefined') { toast('The spreadsheet reader did not load. Check your internet connection and try again.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const wb = XLSX.read(new Uint8Array(reader.result), { type: 'array', cellDates: true });
+        const sheetName = wb.SheetNames.find(n => /master/i.test(n)) || wb.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '', raw: true });
+        if (!rows.length || !Object.keys(rows[0]).some(h => h.trim().toLowerCase() === 'name')) { toast('No "Name" column found on sheet ' + sheetName + '. Use the master data file.'); return; }
+        const res = importRows(rows);
+        save();
+        openModal({ kind: 'import-result', res, file: file.name });
+      } catch (err) {
+        toast('Could not read ' + file.name + '. Save it as .xlsx and try again.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
 
   // ---------- modals ----------
   function modalView(m) {
     if (m.kind === 'add-emp' || m.kind === 'edit-emp') {
       const editing = m.kind === 'edit-emp';
-      const e = editing ? emp(m.id) : { name: '', email: '', country: 'ID', department: 'Operations', title: '', grade: '1.1', joinDate: todayISO(), role: 'reportee', managerId: '' };
+      const e = editing ? emp(m.id) : { name: '', status: 'FT', entity: 'Swing', joinDate: '', role: 'reportee', managerId: '' };
       const sel = (v, cur) => v === cur ? ' selected' : '';
-      return '<div><div class="eyebrow">' + (editing ? 'Edit · ' + e.id : 'New account') + '</div><h2 style="margin-top:8px">' + (editing ? esc(e.name) : 'Create an attendance account') + '</h2><p class="muted" style="margin-top:6px">' + (editing ? 'Change job details, access level and leader. The user ID stays the same.' : 'We generate the user ID and a temporary password. Email sign-in comes later.') + '</p></div>' +
-        '<form id="emp-form" class="stack" novalidate data-edit="' + (editing ? e.id : '') + '"><div class="form-grid">' +
+      return '<div><div class="eyebrow">' + (editing ? 'Edit · ' + esc(e.id) : 'New account') + '</div><h2 style="margin-top:8px">' + (editing ? esc(e.name) : 'Create an account') + '</h2><p class="muted" style="margin-top:6px">' + (editing ? 'The username stays the same.' : 'We generate the username and a temporary password.') + '</p></div>' +
+        '<form id="emp-form" class="stack" novalidate data-edit="' + (editing ? esc(e.id) : '') + '"><div class="form-grid">' +
           '<label class="field full"><span>Full name</span><input class="input" id="ne-name" placeholder="e.g. Putri Anggraini" value="' + esc(e.name) + '"></label>' +
-          '<label class="field full"><span>Work email <span class="faint" style="font-weight:400">(optional)</span></span><input class="input" type="email" id="ne-email" placeholder="name@getswing.app" value="' + esc(e.email) + '"><small>Saved on the profile for later. Not used for sign-in yet.</small></label>' +
-          '<label class="field"><span>Country</span><select class="input" id="ne-country"' + (editing ? ' disabled' : '') + '>' + Object.keys(COUNTRIES).map(c => '<option value="' + c + '"' + sel(c, e.country) + '>' + COUNTRIES[c] + '</option>').join('') + '</select>' + (editing ? '<small>Country is part of the user ID and cannot change.</small>' : '') + '</label>' +
-          '<label class="field"><span>Department</span><select class="input" id="ne-dept">' + DEPARTMENTS.map(d => '<option' + sel(d, e.department) + '>' + d + '</option>').join('') + '</select></label>' +
-          '<label class="field"><span>Job title</span><input class="input" id="ne-title" placeholder="e.g. Operations Associate" value="' + esc(e.title) + '"></label>' +
-          '<label class="field"><span>Grade</span><select class="input" id="ne-grade">' + GRADES.map(g => '<option' + sel(g, e.grade) + '>' + g + '</option>').join('') + '</select></label>' +
-          (editing ? '' : '<label class="field"><span>Join date</span><input class="input" type="date" id="ne-join" value="' + e.joinDate + '"></label>') +
-          '<label class="field"><span>Access</span><select class="input" id="ne-role">' + ['reportee', 'leader', 'admin'].map(r => '<option value="' + r + '"' + sel(r, e.role) + '>' + ROLE_LABEL[r] + '</option>').join('') + '</select><small>Leaders approve leave for their direct reports. HR admins approve anyone and manage accounts.</small></label>' +
-          '<label class="field full"><span>Reports to</span><select class="input" id="ne-manager">' + leaderOptions(editing ? e.id : null, e.managerId) + '</select><small>This person approves their leave. People Ops can always approve too.</small></label>' +
+          '<label class="field"><span>FT / PT</span><select class="input" id="ne-status">' + ['FT', 'PT'].map(s => '<option value="' + s + '"' + sel(s, e.status) + '>' + STATUS_LABEL[s] + '</option>').join('') + '</select></label>' +
+          '<label class="field"><span>Entity</span><select class="input" id="ne-entity"' + (editing ? ' disabled' : '') + '>' + ['Swing', 'GSA'].map(s => '<option' + sel(s, e.entity) + '>' + s + '</option>').join('') + '</select></label>' +
+          '<label class="field"><span>Join date</span><input class="input" type="date" id="ne-join" value="' + e.joinDate + '"><small>Paid leave builds up from this date.</small></label>' +
+          '<label class="field"><span>Access</span><select class="input" id="ne-role">' + ['reportee', 'leader', 'admin'].map(r => '<option value="' + r + '"' + sel(r, e.role) + '>' + ROLE_LABEL[r] + '</option>').join('') + '</select></label>' +
+          '<label class="field full"><span>Direct report to</span><select class="input" id="ne-manager">' + leaderOptions(editing ? e.id : null, e.managerId) + '</select><small>This leader approves their leave. People Ops can always approve too.</small></label>' +
         '</div><p class="faint" id="ne-preview" style="font-size:13.5px"></p><p class="error-text" id="ne-error" hidden></p>' +
         '<div class="modal-actions"><button class="btn" type="button" data-action="close-modal">Cancel</button><button class="btn primary" type="submit">' + (editing ? 'Save changes' : 'Create account') + '</button></div></form>';
     }
     if (m.kind === 'creds') {
       const e = emp(m.id);
-      const text = 'Swing HRIS - Attendance\nUser ID: ' + e.id + '\nTemporary password: ' + m.password + '\nYou will set your own password on first sign-in.';
-      return '<div><div class="eyebrow">' + (m.reset ? 'Password reset' : 'Account created') + '</div><h2 style="margin-top:8px">Share these with ' + esc(e.name.split(' ')[0]) + '</h2><p class="muted" style="margin-top:6px">The temporary password is shown only once. ' + esc(e.name) + ' will be asked to set a new one at first sign-in.</p></div>' +
+      const text = 'Swing HRIS - Attendance\nUsername: ' + e.id + '\nTemporary password: ' + m.password + '\nYou will set your own password on first sign-in.';
+      return '<div><div class="eyebrow">' + (m.reset ? 'Password reset' : 'Account created') + '</div><h2 style="margin-top:8px">Share these with ' + esc(e.name.split(' ')[0]) + '</h2><p class="muted" style="margin-top:6px">' + esc(e.name) + ' will be asked to set a new password at first sign-in.</p></div>' +
         '<div class="cred">' +
-          '<div class="cred-row"><div><small>User ID</small><span class="mono">' + e.id + '</span></div><button class="btn sm" data-action="copy" data-text="' + esc(e.id) + '">Copy</button></div>' +
+          '<div class="cred-row"><div><small>Username</small><span class="mono">' + esc(e.id) + '</span></div><button class="btn sm" data-action="copy" data-text="' + esc(e.id) + '">Copy</button></div>' +
           '<div class="cred-row"><div><small>Temporary password</small><span class="mono">' + esc(m.password) + '</span></div><button class="btn sm" data-action="copy" data-text="' + esc(m.password) + '">Copy</button></div>' +
         '</div>' +
         '<div class="modal-actions"><button class="btn" data-action="copy" data-text="' + esc(text) + '">Copy both</button><button class="btn primary" data-action="close-modal">Done</button></div>';
     }
+    if (m.kind === 'import-result') {
+      const r = m.res;
+      return '<div><div class="eyebrow">Import</div><h2 style="margin-top:8px">Imported ' + esc(m.file) + '</h2></div>' +
+        '<div class="grid-2" style="gap:10px">' +
+          [['New accounts', r.created.length], ['Updated', r.updated], ['Join dates set', r.join], ['Leaders set', r.leaders]].map(([k, v]) => '<div class="card" style="padding:14px;box-shadow:none"><div style="font-family:var(--font-display);font-weight:800;font-size:28px" class="num">' + v + '</div><div class="muted" style="font-size:13px">' + k + '</div></div>').join('') +
+        '</div>' +
+        (r.created.length ? '<p class="muted" style="font-size:14px">New accounts use the temporary password from the file, or a generated one if the file had none. Everyone must set a new password at first sign-in.</p>' : '') +
+        (r.warnings.length ? '<div class="note warn"><div><b>' + r.warnings.length + ' ' + (r.warnings.length === 1 ? 'row needs' : 'rows need') + ' a look</b><ul style="margin:6px 0 0;padding-left:18px">' + r.warnings.slice(0, 12).map(w => '<li>' + esc(w) + '</li>').join('') + '</ul>' + (r.warnings.length > 12 ? '<div>and ' + (r.warnings.length - 12) + ' more</div>' : '') + '</div></div>' : '') +
+        '<div class="modal-actions"><button class="btn primary" data-action="close-modal">Done</button></div>';
+    }
     if (m.kind === 'confirm-reset') {
       const e = emp(m.id);
       return '<div><div class="eyebrow">Reset password</div><h2 style="margin-top:8px">Reset password for ' + esc(e.name) + '?</h2><p class="muted" style="margin-top:6px">Their current password stops working right away. You get a new temporary password to share.</p></div>' +
-        '<div class="modal-actions"><button class="btn" data-action="close-modal">Cancel</button><button class="btn primary" data-action="reset-pw-yes" data-id="' + e.id + '">Reset password</button></div>';
+        '<div class="modal-actions"><button class="btn" data-action="close-modal">Cancel</button><button class="btn primary" data-action="reset-pw-yes" data-id="' + esc(e.id) + '">Reset password</button></div>';
     }
     if (m.kind === 'confirm-deactivate') {
       const e = emp(m.id);
+      const reports = directReports(e.id).filter(x => x.active).length;
       return '<div><div class="eyebrow">Deactivate</div><h2 style="margin-top:8px">Deactivate ' + esc(e.name) + '?</h2><p class="muted" style="margin-top:6px">They can no longer sign in. Their leave history stays. You can reactivate the account any time.</p></div>' +
-        (directReports(e.id).filter(x => x.active).length ? '<div class="note warn"><div><b>' + directReports(e.id).filter(x => x.active).length + ' people report to ' + esc(e.name.split(' ')[0]) + '.</b> Their leave requests go to People Ops until you give them a new leader in Reporting line.</div></div>' : '') +
-        '<div class="modal-actions"><button class="btn" data-action="close-modal">Cancel</button><button class="btn danger" data-action="deactivate-yes" data-id="' + e.id + '">Deactivate</button></div>';
+        (reports ? '<div class="note warn"><div><b>' + reports + ' people report to ' + esc(e.name.split(' ')[0]) + '.</b> Their leave goes to People Ops until you give them a new leader.</div></div>' : '') +
+        '<div class="modal-actions"><button class="btn" data-action="close-modal">Cancel</button><button class="btn danger" data-action="deactivate-yes" data-id="' + esc(e.id) + '">Deactivate</button></div>';
     }
     if (m.kind === 'reject') {
       const r = state.requests.find(x => x.id === m.id), e = emp(r.empId);
       return '<div><div class="eyebrow">Reject request</div><h2 style="margin-top:8px">Reject ' + esc(e.name.split(' ')[0]) + '\'s ' + leaveType(r.type).name.toLowerCase() + '?</h2><p class="muted" style="margin-top:6px">' + fmtRange(r.start, r.end) + ' · ' + fmtDays(r.days) + '</p></div>' +
-        '<form id="reject-form" class="stack" novalidate><label class="field"><span>Reason for the employee</span><textarea class="input" id="rj-note" placeholder="e.g. Overlaps the stock-take week. Please move it by one week."></textarea></label><p class="error-text" id="rj-error" hidden></p>' +
+        '<form id="reject-form" class="stack" novalidate><label class="field"><span>Reason for the employee</span><textarea class="input" id="rj-note" placeholder="e.g. Overlaps month-end closing. Please move it by one week."></textarea></label><p class="error-text" id="rj-error" hidden></p>' +
         '<div class="modal-actions"><button class="btn" type="button" data-action="close-modal">Cancel</button><button class="btn danger" type="submit">Reject request</button></div></form>';
     }
     return '';
@@ -1042,12 +1185,12 @@ td.actions { white-space: nowrap; text-align: right; }
     const lf = document.getElementById('login-form');
     if (lf) lf.addEventListener('submit', ev => {
       ev.preventDefault();
-      const id = document.getElementById('login-id').value.trim().toUpperCase();
+      const id = document.getElementById('login-id').value.trim().toLowerCase();
       const pw = document.getElementById('login-pw').value;
       const e = emp(id);
-      if (!id || !pw) return showError('login-error', 'Enter your user ID and password.');
-      if (!e || e.password !== pw) return showError('login-error', 'User ID or password is incorrect. Check with your HR admin if you lost them.');
-      if (!e.active) return showError('login-error', 'This account is deactivated. Ask your HR admin to reactivate it.');
+      if (!id || !pw) return showError('login-error', 'Enter your username and password.');
+      if (!e || e.password !== pw) return showError('login-error', 'Username or password is incorrect. Check with People Ops if you lost them.');
+      if (!e.active) return showError('login-error', 'This account is deactivated. Ask People Ops to reactivate it.');
       state.sessionUserId = e.id; ui.view = null; ui.draft = null; save(); render();
     });
 
@@ -1077,18 +1220,19 @@ td.actions { white-space: nowrap; text-align: right; }
         const d = ui.draft, t = leaveType(d.type);
         const single = d.start && d.start === d.end;
         if (!single && d.half !== 'none') d.half = 'none';
+        document.querySelectorAll('#rq-type button').forEach(b => { const on = b.dataset.type === d.type; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
         document.querySelectorAll('#rq-half button').forEach(b => { b.classList.toggle('on', b.dataset.half === d.half); b.disabled = !single && b.dataset.half !== 'none'; });
-        const days = countDays(d.start, d.end, u.country, d.half).days;
-        const need = docRequired(t, days);
-        document.getElementById('rq-doc-label').textContent = need ? 'Supporting document (required)' : 'Supporting document (optional)';
-        document.getElementById('rq-type-hint').textContent = t.code === 'SL' ? 'Two days or more needs a medical certificate (surat dokter / MC).' : t.hint ? t.hint + '. Attach proof.' : t.paid ? 'Paid. Deducted from your yearly balance.' : 'Unpaid. Not deducted from any balance.';
+        document.getElementById('rq-type-hint').textContent = t.hint;
+        document.getElementById('rq-specify-wrap').hidden = d.type !== 'OL';
+        document.getElementById('rq-doc-wrap').hidden = d.type !== 'SL';
         document.getElementById('rq-summary').innerHTML = summaryHTML(u);
         showError('rq-error', '');
       };
-      document.getElementById('rq-type').addEventListener('change', e => { ui.draft.type = e.target.value; sync(); });
+      document.getElementById('rq-type').addEventListener('click', e => { const b = e.target.closest('button[data-type]'); if (!b) return; ui.draft.type = b.dataset.type; sync(); });
       document.getElementById('rq-start').addEventListener('change', e => { ui.draft.start = e.target.value; if (!ui.draft.end || ui.draft.end < ui.draft.start) { ui.draft.end = ui.draft.start; document.getElementById('rq-end').value = ui.draft.end; } sync(); });
       document.getElementById('rq-end').addEventListener('change', e => { ui.draft.end = e.target.value; sync(); });
       document.getElementById('rq-reason').addEventListener('input', e => { ui.draft.reason = e.target.value; });
+      document.getElementById('rq-specify').addEventListener('input', e => { ui.draft.specify = e.target.value; document.getElementById('rq-summary').innerHTML = summaryHTML(u); });
       document.getElementById('rq-doc').addEventListener('change', e => { const f = e.target.files[0]; ui.draft.attachment = f ? f.name : ''; document.getElementById('rq-doc-hint').textContent = f ? 'Attached: ' + f.name : 'PDF, JPG or PNG.'; sync(); });
       document.getElementById('rq-half').addEventListener('click', e => { const b = e.target.closest('button[data-half]'); if (!b || b.disabled) return; ui.draft.half = b.dataset.half; sync(); });
       rf.addEventListener('submit', ev => {
@@ -1098,7 +1242,7 @@ td.actions { white-space: nowrap; text-align: right; }
         const d = ui.draft;
         state.seq.req++;
         const id = 'LV-' + String(state.seq.req).padStart(4, '0');
-        state.requests.push({ id, empId: u.id, type: d.type, start: d.start, end: d.end, half: d.half, days: countDays(d.start, d.end, u.country, d.half).days, reason: d.reason.trim(), attachment: d.attachment, status: 'pending', createdAt: todayISO(), decidedBy: null, decidedAt: null, note: '' });
+        state.requests.push({ id, empId: u.id, type: d.type, start: d.start, end: d.end, half: d.half, days: countDays(d.start, d.end, u.country, d.half).days, reason: d.reason.trim(), specify: d.type === 'OL' ? d.specify.trim() : '', attachment: d.type === 'SL' ? d.attachment : '', status: 'pending', createdAt: todayISO(), decidedBy: null, decidedAt: null, note: '' });
         save(); ui.draft = null; ui.view = 'mine'; ui.reqFilter = 'all'; render(); toast('Request ' + id + ' sent to ' + approverLabel(u).replace(' or People Ops', ''));
       });
       sync();
@@ -1110,11 +1254,15 @@ td.actions { white-space: nowrap; text-align: right; }
       const n = document.getElementById('emp-q'); n.focus(); n.setSelectionRange(pos, pos);
     });
 
+    const imp = document.getElementById('import-file');
+    if (imp) imp.addEventListener('change', e => { const f = e.target.files[0]; if (f) handleImport(f); });
+
     const polf = document.getElementById('policy-form');
     if (polf) polf.addEventListener('submit', ev => {
       ev.preventDefault();
-      state.leaveTypes.forEach(t => { if (!t.quota) return; ['ID', 'MY'].forEach(c => { const v = Number(document.getElementById('q-' + t.code + '-' + c).value); if (Number.isFinite(v) && v >= 0) t.quota[c] = v; }); });
-      save(); render(); toast('Leave quotas saved');
+      const per = Number(document.getElementById('pol-per').value), valid = Math.round(Number(document.getElementById('pol-valid').value));
+      if (!(per >= 0 && per <= 5) || !(valid >= 1 && valid <= 5)) { toast('Days per month must be 0 to 5 and validity 1 to 5 years'); return; }
+      state.policy = { perMonth: per, validYears: valid }; save(); render(); toast('Leave policy saved');
     });
 
     const hf = document.getElementById('hol-form');
@@ -1130,29 +1278,30 @@ td.actions { white-space: nowrap; text-align: right; }
     const ef = document.getElementById('emp-form');
     if (ef) {
       const editId = ef.dataset.edit;
-      const preview = () => { if (!editId) document.getElementById('ne-preview').textContent = 'User ID will be ' + nextEmpId(document.getElementById('ne-country').value) + '.'; };
-      document.getElementById('ne-country').addEventListener('change', preview); preview();
+      const preview = () => { if (editId) return; const n = document.getElementById('ne-name').value.trim(); const un = n ? makeUsername(n, document.getElementById('ne-entity').value) : null; document.getElementById('ne-preview').textContent = un ? 'Username will be ' + un + '.' : ''; };
+      document.getElementById('ne-name').addEventListener('input', preview);
+      document.getElementById('ne-entity').addEventListener('change', preview);
       ef.addEventListener('submit', ev => {
         ev.preventDefault();
-        const name = document.getElementById('ne-name').value.trim(), email = document.getElementById('ne-email').value.trim();
+        const name = document.getElementById('ne-name').value.replace(/\s+/g, ' ').trim();
         const role = document.getElementById('ne-role').value, managerId = document.getElementById('ne-manager').value || null;
         if (name.length < 2) return showError('ne-error', 'Enter the employee\'s full name.');
-        if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return showError('ne-error', 'That email does not look right. Leave it empty or fix it.');
-        if (email && state.employees.some(e => e.id !== editId && e.email.toLowerCase() === email.toLowerCase())) return showError('ne-error', email + ' already belongs to another account.');
-        const fields = { name, email, department: document.getElementById('ne-dept').value, title: document.getElementById('ne-title').value.trim() || 'Employee', grade: document.getElementById('ne-grade').value, role, managerId };
+        const fields = { name, status: document.getElementById('ne-status').value, joinDate: document.getElementById('ne-join').value, role, managerId };
         if (editId) {
           const e = emp(editId);
           const reports = directReports(editId).length;
-          if (role === 'reportee' && reports) return showError('ne-error', e.name.split(' ')[0] + ' has ' + reports + ' direct reports. Move them to another leader in Reporting line before changing access to Reportee.');
-          if (editId === u.id && role !== 'admin') return showError('ne-error', 'You cannot remove your own HR admin access. Ask another HR admin.');
+          if (role === 'reportee' && reports) return showError('ne-error', e.name.split(' ')[0] + ' has ' + reports + ' direct reports. Move them to another leader before changing access to Reportee.');
+          if (editId === u.id && role !== 'admin') return showError('ne-error', 'You cannot remove your own HR admin access.');
           Object.assign(e, fields); save(); ui.modal = null; render(); toast(e.name + ' updated');
           return;
         }
-        const country = document.getElementById('ne-country').value;
+        const entity = document.getElementById('ne-entity').value;
+        const id = makeUsername(name, entity);
+        if (!id) return showError('ne-error', 'The name needs at least one word of two letters or more to make a username.');
         const password = generatePassword();
-        const e = Object.assign({ id: nextEmpId(country), country, joinDate: document.getElementById('ne-join').value || todayISO(), password, mustChange: true, active: true }, fields);
-        state.employees.push(e); save();
-        openModal({ kind: 'creds', id: e.id, password });
+        state.employees.push(Object.assign({ id, entity, country: 'ID', password, mustChange: true, active: true }, fields));
+        save();
+        openModal({ kind: 'creds', id, password });
       });
     }
 
@@ -1169,8 +1318,9 @@ td.actions { white-space: nowrap; text-align: right; }
 
   app.addEventListener('click', ev => {
     const nav = ev.target.closest('[data-nav]');
-    if (nav) { ui.view = nav.dataset.nav; ui.confirmCancel = null; render(); window.scrollTo(0, 0); return; }
+    if (nav) { ui.view = nav.dataset.nav; ui.confirmCancel = null; ui.revealed = null; render(); window.scrollTo(0, 0); return; }
     const f = ev.target.closest('[data-filter]'); if (f) { ui.reqFilter = f.dataset.filter; render(); return; }
+    const ef = ev.target.closest('[data-emp-filter]'); if (ef) { ui.empFilter = ef.dataset.empFilter; render(); return; }
     const tab = ev.target.closest('[data-tab]'); if (tab) { ui.approvalsTab = tab.dataset.tab; render(); return; }
     const cc = ev.target.closest('[data-cal-country]'); if (cc) { ui.calCountry = cc.dataset.calCountry; render(); return; }
     const hc = ev.target.closest('[data-hol-country]'); if (hc) { ui.holCountry = hc.dataset.holCountry; render(); return; }
@@ -1179,15 +1329,8 @@ td.actions { white-space: nowrap; text-align: right; }
     if (!a) return;
     const id = a.dataset.id, u = me();
     switch (a.dataset.action) {
-      case 'demo': {
-        const e = emp(id);
-        document.getElementById('login-id').value = e.id;
-        document.getElementById('login-pw').value = e.password;
-        showError('login-error', '');
-        break;
-      }
       case 'toggle-pw': { const i = document.getElementById('login-pw'); i.type = i.type === 'password' ? 'text' : 'password'; a.textContent = i.type === 'password' ? 'Show' : 'Hide'; break; }
-      case 'logout': state.sessionUserId = null; ui.view = null; ui.modal = null; ui.draft = null; save(); render(); break;
+      case 'logout': state.sessionUserId = null; ui.view = null; ui.modal = null; ui.draft = null; ui.revealed = null; save(); render(); break;
       case 'reset-demo': try { localStorage.removeItem(STORE_KEY); } catch (e) {} state = seed(); ui.view = null; ui.draft = null; render(); toast('Demo data reset'); break;
       case 'reset-draft': ui.draft = null; render(); break;
       case 'cancel-ask': ui.confirmCancel = id; render(); break;
@@ -1195,10 +1338,13 @@ td.actions { white-space: nowrap; text-align: right; }
       case 'cancel-yes': { const r = state.requests.find(x => x.id === id); r.status = 'cancelled'; ui.confirmCancel = null; save(); render(); toast(r.id + ' cancelled'); break; }
       case 'approve': { const r = state.requests.find(x => x.id === id); if (!canApprove(u, r)) { toast('Only ' + approverLabel(emp(r.empId)) + ' can approve this request'); break; } Object.assign(r, { status: 'approved', decidedBy: u.id, decidedAt: todayISO(), note: '' }); save(); render(); toast(r.id + ' approved for ' + emp(r.empId).name); break; }
       case 'reject': { const r = state.requests.find(x => x.id === id); if (canApprove(u, r)) openModal({ kind: 'reject', id }); break; }
-      case 'edit-emp': openModal({ kind: 'edit-emp', id }); break;
       case 'add-emp': openModal({ kind: 'add-emp' }); break;
+      case 'edit-emp': openModal({ kind: 'edit-emp', id }); break;
       case 'close-modal': closeModal(); break;
       case 'copy': copy(a.dataset.text, a); break;
+      case 'reveal-pw': ui.revealed = id; render(); break;
+      case 'hide-pw': ui.revealed = null; render(); break;
+      case 'goto-missing': ui.view = 'a-employees'; ui.empFilter = people().some(e => e.active && !e.joinDate) ? 'nojoin' : 'noleader'; render(); break;
       case 'reset-pw': openModal({ kind: 'confirm-reset', id }); break;
       case 'reset-pw-yes': { const e = emp(id); const password = generatePassword(); e.password = password; e.mustChange = true; save(); openModal({ kind: 'creds', id, password, reset: true }); break; }
       case 'toggle-active': { const e = emp(id); if (e.active) openModal({ kind: 'confirm-deactivate', id }); else { e.active = true; save(); render(); toast(e.name + ' reactivated'); } break; }
@@ -1210,12 +1356,19 @@ td.actions { white-space: nowrap; text-align: right; }
   });
 
   app.addEventListener('change', ev => {
+    const join = ev.target.closest('input[data-join]');
+    if (join) {
+      const e = emp(join.dataset.join);
+      e.joinDate = join.value; save(); render();
+      toast(join.value ? e.name + ' joined ' + fmt(join.value) : 'Join date cleared for ' + e.name);
+      return;
+    }
     const sel = ev.target.closest('select[data-org]');
     if (!sel) return;
     const e = emp(sel.dataset.org), managerId = sel.value || null;
     if (managerId && (managerId === e.id || isBelow(managerId, e.id))) { toast('That would put ' + e.name + ' under their own team. Pick someone else.'); render(); return; }
     e.managerId = managerId; save(); render();
-    toast(managerId ? e.name + ' now reports to ' + emp(managerId).name : e.name + ' is now at the top of the line');
+    toast(managerId ? e.name + ' now reports to ' + emp(managerId).name : e.name + ' has no leader now');
   });
 
   document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && ui.modal) closeModal(); });
