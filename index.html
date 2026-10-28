@@ -303,7 +303,7 @@ td .input.sm { width: auto; min-width: 140px; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 (function () {
-  const STORE_KEY = 'swing-hris-attendance-v3';
+  const STORE_KEY = 'swing-hris-attendance-v4';
   const PRELOADED_ROSTER = /*ROSTER*/null/*END*/;
   const ROLE_LABEL = { admin: 'HR admin', leader: 'Leader', reportee: 'Reportee' };
   const STATUS_LABEL = { FT: 'Full time', PT: 'Part time' };
@@ -381,18 +381,8 @@ td .input.sm { width: auto; min-width: 140px; }
   // ---------- store ----------
   let state;
   function load() {
-    try { const raw = localStorage.getItem(STORE_KEY); if (raw) return migrate(JSON.parse(raw)); } catch (e) {}
+    try { const raw = localStorage.getItem(STORE_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
     return seed();
-  }
-  // Older saves used a 2-year validity rule and kept GSA rows as separate accounts.
-  function migrate(s) {
-    if (s.policy.carryCap == null) s.policy = { perMonth: s.policy.perMonth || 1, carryCap: 5 };
-    const merged = {};
-    s.employees = s.employees.filter(e => { if (/\.gsa\d*$/.test(e.id)) { merged[e.id] = e.id.replace(/\.gsa\d*$/, ''); return false; } delete e.entity; return true; });
-    s.employees.forEach(e => { if (merged[e.managerId]) e.managerId = merged[e.managerId]; });
-    s.requests.forEach(r => { if (merged[r.empId]) r.empId = merged[r.empId]; });
-    if (merged[s.sessionUserId]) s.sessionUserId = null;
-    return s;
   }
   function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
 
