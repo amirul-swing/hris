@@ -412,7 +412,14 @@ td .input.sm { width: auto; min-width: 140px; }
   // ---------- store ----------
   let state;
   function load() {
-    try { const raw = localStorage.getItem(STORE_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        (PRELOADED_ROSTER || []).forEach(p => { if (!saved.employees.some(e => e.id === p.username)) saved.employees.push(rosterToEmployee(p)); });
+        return saved;
+      }
+    } catch (e) {}
     return seed();
   }
   function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
