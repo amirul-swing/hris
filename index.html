@@ -253,6 +253,37 @@ td .input.sm { width: auto; min-width: 140px; }
 .org-node b { font-family: var(--font-display); }
 .org-node select { width: auto; max-width: 100%; min-height: 36px; padding: 6px 10px; font-size: 13.5px; }
 
+/* Org chart: nested lists joined by connector lines */
+.oc-wrap { overflow-x: auto; padding: 8px 4px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.oc, .oc ul { display: flex; justify-content: center; margin: 0; padding: 0; position: relative; }
+.oc { min-width: max-content; margin-inline: auto; }
+.oc ul { padding-top: 22px; }
+.oc li { list-style: none; position: relative; padding: 22px 8px 0; display: flex; flex-direction: column; align-items: center; }
+.oc > li { padding-top: 12px; }
+.oc li::before, .oc li::after { content: ""; position: absolute; top: 0; right: 50%; width: 50%; height: 22px; border-top: 2px solid var(--line-strong); }
+.oc li::after { right: auto; left: 50%; border-left: 2px solid var(--line-strong); }
+.oc li:only-child::before, .oc li:only-child::after, .oc > li::before, .oc > li::after { display: none; }
+.oc li:only-child { padding-top: 0; }
+.oc li:first-child::before, .oc li:last-child::after { border: 0 none; }
+.oc li:last-child::before { border-right: 2px solid var(--line-strong); border-radius: 0 8px 0 0; }
+.oc li:first-child::after { border-radius: 8px 0 0 0; }
+.oc ul::before { content: ""; position: absolute; top: 0; left: 50%; height: 22px; border-left: 2px solid var(--line-strong); }
+.oc-node { display: flex; gap: 8px; align-items: center; text-align: left; padding: 8px 12px 8px 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); width: 210px; position: relative; z-index: 1; }
+.oc-node .avatar { width: 30px; height: 30px; font-size: 11.5px; }
+.oc-node div { min-width: 0; display: grid; }
+.oc-node b { font-family: var(--font-display); font-size: 13.5px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oc-node small { color: var(--faint); font-size: 12px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oc-node.leader { border-color: var(--accent-line); background: var(--accent-soft); }
+.oc-node.leader small.count { color: var(--accent); font-weight: 700; }
+.oc-node.root { background: var(--ink); border-color: var(--ink); color: var(--on-ink); justify-content: center; text-align: center; }
+.oc-node.root small { color: var(--on-ink); opacity: .7; white-space: normal; }
+.oc-node.bucket { border-style: dashed; border-color: var(--warn); background: var(--warn-bg); }
+.oc-node.bucket small { color: var(--warn); }
+.oc-node.off { opacity: .5; }
+.oc-leaves { position: relative; padding-top: 22px; display: grid; gap: 6px; }
+.oc-leaves::before { content: ""; position: absolute; top: 0; left: 50%; height: 22px; border-left: 2px solid var(--line-strong); }
+.oc-leaves .oc-node { box-shadow: inset 3px 0 0 var(--line-strong); }
+
 .cred { display: grid; gap: 12px; }
 .cred-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px dashed var(--line-strong); border-radius: 12px; padding: 12px 14px; background: var(--surface-2); flex-wrap: wrap; }
 .cred-row small { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; font-family: var(--font-display); }
@@ -316,7 +347,7 @@ td .input.sm { width: auto; min-width: 140px; }
   const LOGO_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M18.4 8.2A7.5 7.5 0 1 0 19.5 12"/><path d="M5 19 19.5 4.5"/><path d="M13.5 4.5h6v6"/></svg>';
 
   const app = document.getElementById('app');
-  const ui = { view: null, reqFilter: 'all', approvalsTab: 'pending', calMonth: null, calCountry: 'all', holCountry: 'ID', empQuery: '', empFilter: 'all', confirmCancel: null, modal: null, draft: null, revealed: null };
+  const ui = { view: null, reqFilter: 'all', approvalsTab: 'pending', calMonth: null, calCountry: 'all', holCountry: 'ID', empQuery: '', empFilter: 'all', orgView: 'chart', orgShowUnassigned: false, confirmCancel: null, modal: null, draft: null, revealed: null };
 
   // ---------- dates ----------
   const pad = n => String(n).padStart(2, '0');
@@ -992,17 +1023,44 @@ td .input.sm { width: auto; min-width: 140px; }
     '</div>' + (kids.length ? '<div class="org-children">' + kids.map(orgNode).join('') + '</div>' : '') + '</div>';
   }
 
+  function ocCard(e, extraClass) {
+    const kids = directReports(e.id).length;
+    return '<div class="oc-node' + (e.role !== 'reportee' ? ' leader' : '') + (e.active ? '' : ' off') + (extraClass ? ' ' + extraClass : '') + '" title="' + esc(e.name) + (e.title ? ' · ' + esc(e.title) : '') + '">' + avatar(e) +
+      '<div><b>' + esc(e.name) + '</b><small>' + (e.title ? esc(e.title) : STATUS_LABEL[e.status]) + '</small>' + (kids ? '<small class="count">' + kids + ' direct ' + (kids === 1 ? 'report' : 'reports') + '</small>' : '') + '</div></div>';
+  }
+
+  function ocTree(e) {
+    const kids = directReports(e.id).filter(k => !k.system);
+    if (!kids.length) return '<li>' + ocCard(e) + '</li>';
+    const allLeaves = kids.every(k => !directReports(k.id).length);
+    if (allLeaves && kids.length > 2) return '<li>' + ocCard(e) + '<div class="oc-leaves">' + kids.map(k => ocCard(k)).join('') + '</div></li>';
+    return '<li>' + ocCard(e) + '<ul>' + kids.map(ocTree).join('') + '</ul></li>';
+  }
+
   VIEWS['a-org'] = () => {
     const all = people();
     const leaders = all.filter(e => e.role !== 'reportee' && (!e.managerId || !emp(e.managerId)));
     const unassigned = all.filter(e => e.role === 'reportee' && (!e.managerId || !emp(e.managerId)));
+    const tabs = '<div class="row" style="justify-content:space-between"><div class="seg">' + [['chart', 'Chart'], ['list', 'Edit list']].map(([k, l]) => '<button data-org-view="' + k + '" class="' + (ui.orgView === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
+      '<div class="legend"><span><span class="tag">Leader</span>Approves leave for direct reports</span><span><span class="tag">HR admin</span>Approves anyone</span></div></div>';
+    let body;
+    if (ui.orgView === 'chart') {
+      const bucket = unassigned.length ? '<li><div class="oc-node bucket"><div><b>No leader yet</b><small>' + unassigned.length + ' people · People Ops approves</small></div></div>' +
+        (ui.orgShowUnassigned ? '<div class="oc-leaves">' + unassigned.map(k => ocCard(k)).join('') + '</div>' : '') +
+        '<button class="btn ghost sm" data-action="org-toggle-unassigned" style="margin-top:6px">' + (ui.orgShowUnassigned ? 'Hide' : 'Show all ' + unassigned.length) + '</button></li>' : '';
+      body = all.length ? '<div class="oc-wrap"><ul class="oc"><li><div class="oc-node root"><div><b>People Ops</b><small>Approves anyone without a leader</small></div></div>' +
+        ((leaders.length || bucket) ? '<ul>' + leaders.map(ocTree).join('') + bucket + '</ul>' : '') + '</li></ul></div>' +
+        '<p class="faint" style="font-size:13px">To change who reports to whom, open <button class="btn ghost sm" data-org-view="list">Edit list</button> or set Direct report to in Employees &amp; access.</p>'
+        : '<div class="card"><p class="empty">No employees yet. Import the master data file in Employees &amp; access.</p></div>';
+    } else {
+      body = '<div class="org">' + leaders.map(orgNode).join('') + '</div>' +
+        (unassigned.length ? '<div class="stack"><div class="card-head" style="margin:0"><h3>No leader yet <span class="faint num" style="font-weight:600">(' + unassigned.length + ')</span></h3><span class="faint" style="font-size:13.5px">Pick a leader for each person. Until then People Ops approves their leave.</span></div><div class="org">' + unassigned.map(orgNode).join('') + '</div></div>' : '');
+    }
     return {
       eyebrow: 'People Ops · Reporting line',
       title: 'Reporting line',
       sub: 'Who reports to whom. A person\'s leader approves their leave, and People Ops can always approve too. Only leaders and HR admins can have reportees.',
-      body: '<div class="legend"><span><span class="tag">Leader</span>Approves leave for direct reports</span><span><span class="tag">HR admin</span>Approves anyone, manages accounts</span><span>Reportee: requests leave only</span></div>' +
-        '<div class="org">' + leaders.map(orgNode).join('') + '</div>' +
-        (unassigned.length ? '<div class="stack"><div class="card-head" style="margin:0"><h3>No leader yet <span class="faint num" style="font-weight:600">(' + unassigned.length + ')</span></h3><span class="faint" style="font-size:13.5px">Pick a leader for each person. Until then People Ops approves their leave.</span></div><div class="org">' + unassigned.map(orgNode).join('') + '</div></div>' : '')
+      body: tabs + body
     };
   };
 
@@ -1335,6 +1393,7 @@ td .input.sm { width: auto; min-width: 140px; }
     const ef = ev.target.closest('[data-emp-filter]'); if (ef) { ui.empFilter = ef.dataset.empFilter; render(); return; }
     const tab = ev.target.closest('[data-tab]'); if (tab) { ui.approvalsTab = tab.dataset.tab; render(); return; }
     const cc = ev.target.closest('[data-cal-country]'); if (cc) { ui.calCountry = cc.dataset.calCountry; render(); return; }
+    const ov = ev.target.closest('[data-org-view]'); if (ov) { ui.orgView = ov.dataset.orgView; render(); return; }
     const hc = ev.target.closest('[data-hol-country]'); if (hc) { ui.holCountry = hc.dataset.holCountry; render(); return; }
     if (ev.target.classList.contains('overlay')) { closeModal(); return; }
     const a = ev.target.closest('[data-action]');
@@ -1364,6 +1423,7 @@ td .input.sm { width: auto; min-width: 140px; }
       case 'hol-remove': { const list = state.holidays[ui.holCountry]; const i = list.findIndex(h => h.date === a.dataset.date); if (i >= 0) list.splice(i, 1); save(); render(); toast(a.dataset.name + ' removed'); break; }
       case 'cal-prev': case 'cal-next': { const d = fromISO(ui.calMonth + '-01'); d.setMonth(d.getMonth() + (a.dataset.action === 'cal-next' ? 1 : -1)); ui.calMonth = toISO(d).slice(0, 7); render(); break; }
       case 'cal-today': ui.calMonth = todayISO().slice(0, 7); render(); break;
+      case 'org-toggle-unassigned': ui.orgShowUnassigned = !ui.orgShowUnassigned; render(); break;
     }
   });
 
