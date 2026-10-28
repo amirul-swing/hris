@@ -256,7 +256,7 @@ td .input.sm { width: auto; min-width: 140px; }
 /* Org chart: nested lists joined by connector lines */
 .oc-wrap { overflow-x: auto; padding: 8px 4px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .oc, .oc ul { display: flex; justify-content: center; margin: 0; padding: 0; position: relative; }
-.oc { min-width: max-content; margin-inline: auto; }
+.oc { min-width: max-content; margin-inline: auto; gap: 28px; align-items: flex-start; }
 .oc ul { padding-top: 22px; }
 .oc li { list-style: none; position: relative; padding: 22px 8px 0; display: flex; flex-direction: column; align-items: center; }
 .oc > li { padding-top: 12px; }
@@ -268,17 +268,16 @@ td .input.sm { width: auto; min-width: 140px; }
 .oc li:last-child::before { border-right: 2px solid var(--line-strong); border-radius: 0 8px 0 0; }
 .oc li:first-child::after { border-radius: 8px 0 0 0; }
 .oc ul::before { content: ""; position: absolute; top: 0; left: 50%; height: 22px; border-left: 2px solid var(--line-strong); }
-.oc-node { display: flex; gap: 8px; align-items: center; text-align: left; padding: 8px 12px 8px 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); width: 210px; position: relative; z-index: 1; }
+.oc-node { display: flex; gap: 8px; align-items: center; text-align: left; padding: 8px 12px 8px 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); width: 192px; position: relative; z-index: 1; }
 .oc-node .avatar { width: 30px; height: 30px; font-size: 11.5px; }
 .oc-node div { min-width: 0; display: grid; }
 .oc-node b { font-family: var(--font-display); font-size: 13.5px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .oc-node small { color: var(--faint); font-size: 12px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .oc-node.leader { border-color: var(--accent-line); background: var(--accent-soft); }
 .oc-node.leader small.count { color: var(--accent); font-weight: 700; }
-.oc-node.root { background: var(--ink); border-color: var(--ink); color: var(--on-ink); justify-content: center; text-align: center; }
-.oc-node.root small { color: var(--on-ink); opacity: .7; white-space: normal; }
-.oc-node.bucket { border-style: dashed; border-color: var(--warn); background: var(--warn-bg); }
-.oc-node.bucket small { color: var(--warn); }
+.oc-node.top { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.oc-unplaced { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.oc-unplaced .oc-node { width: auto; }
 .oc-node.off { opacity: .5; }
 .oc-leaves { position: relative; padding-top: 22px; display: grid; gap: 6px; }
 .oc-leaves::before { content: ""; position: absolute; top: 0; left: 50%; height: 22px; border-left: 2px solid var(--line-strong); }
@@ -405,6 +404,7 @@ td .input.sm { width: auto; min-width: 140px; }
       holidays: seedHolidays(),
       employees: [{ id: 'admin', name: 'People Ops Admin', status: 'FT', country: 'ID', joinDate: '', managerId: null, role: 'admin', system: true, password: 'swing-admin', mustChange: false, active: true }]
         .concat((PRELOADED_ROSTER || []).map(rosterToEmployee)),
+      rosterAccess: Object.fromEntries((PRELOADED_ROSTER || []).map(p => [p.username, p.access])),
       requests: []
     };
   }
@@ -416,7 +416,14 @@ td .input.sm { width: auto; min-width: 140px; }
       const raw = localStorage.getItem(STORE_KEY);
       if (raw) {
         const saved = JSON.parse(raw);
-        (PRELOADED_ROSTER || []).forEach(p => { if (!saved.employees.some(e => e.id === p.username)) saved.employees.push(rosterToEmployee(p)); });
+        saved.rosterAccess = saved.rosterAccess || {};
+        (PRELOADED_ROSTER || []).forEach(p => {
+          const e = saved.employees.find(x => x.id === p.username);
+          if (!e) saved.employees.push(rosterToEmployee(p));
+          else if (saved.rosterAccess[p.username] !== p.access) e.role = rosterToEmployee(p).role;
+          saved.rosterAccess[p.username] = p.access;
+        });
+        localStorage.setItem(STORE_KEY, JSON.stringify(saved));
         return saved;
       }
     } catch (e) {}
@@ -1046,27 +1053,30 @@ td .input.sm { width: auto; min-width: 140px; }
 
   VIEWS['a-org'] = () => {
     const all = people();
-    const leaders = all.filter(e => e.role !== 'reportee' && (!e.managerId || !emp(e.managerId)));
-    const unassigned = all.filter(e => e.role === 'reportee' && (!e.managerId || !emp(e.managerId)));
-    const tabs = '<div class="row" style="justify-content:space-between"><div class="seg">' + [['chart', 'Chart'], ['list', 'Edit list']].map(([k, l]) => '<button data-org-view="' + k + '" class="' + (ui.orgView === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
-      '<div class="legend"><span><span class="tag">Leader</span>Approves leave for direct reports</span><span><span class="tag">HR admin</span>Approves anyone</span></div></div>';
+    const placed = e => e.managerId && emp(e.managerId);
+    const size = e => directReports(e.id).reduce((n, k) => n + 1 + size(k), 0);
+    const roots = all.filter(e => !placed(e) && (e.role !== 'reportee' || directReports(e.id).length)).sort((a, b) => size(b) - size(a));
+    const unplaced = all.filter(e => !placed(e) && e.role === 'reportee' && !directReports(e.id).length);
+    const tabs = '<div class="row" style="justify-content:space-between"><div class="seg">' + [['chart', 'Org chart'], ['list', 'Edit list']].map(([k, l]) => '<button data-org-view="' + k + '" class="' + (ui.orgView === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' +
+      '<div class="legend"><span><span class="tag">Leader</span>Approves leave for their direct reports</span><span>People Ops (HR admin) can approve anyone\'s leave</span></div></div>';
     let body;
     if (ui.orgView === 'chart') {
-      const bucket = unassigned.length ? '<li><div class="oc-node bucket"><div><b>No leader yet</b><small>' + unassigned.length + ' people · People Ops approves</small></div></div>' +
-        (ui.orgShowUnassigned ? '<div class="oc-leaves">' + unassigned.map(k => ocCard(k)).join('') + '</div>' : '') +
-        '<button class="btn ghost sm" data-action="org-toggle-unassigned" style="margin-top:6px">' + (ui.orgShowUnassigned ? 'Hide' : 'Show all ' + unassigned.length) + '</button></li>' : '';
-      body = all.length ? '<div class="oc-wrap"><ul class="oc"><li><div class="oc-node root"><div><b>People Ops</b><small>Approves anyone without a leader</small></div></div>' +
-        ((leaders.length || bucket) ? '<ul>' + leaders.map(ocTree).join('') + bucket + '</ul>' : '') + '</li></ul></div>' +
-        '<p class="faint" style="font-size:13px">To change who reports to whom, open <button class="btn ghost sm" data-org-view="list">Edit list</button> or set Direct report to in Employees &amp; access.</p>'
-        : '<div class="card"><p class="empty">No employees yet. Import the master data file in Employees &amp; access.</p></div>';
+      body = !all.length ? '<div class="card"><p class="empty">No employees yet. Import the master data file in Employees &amp; access.</p></div>' :
+        (roots.length ? '<div class="oc-wrap"><ul class="oc">' + roots.map(r => ocTree(r).replace('class="oc-node', 'class="oc-node top')).join('') + '</ul></div>' : '<div class="card"><p class="empty">No leaders yet. Give someone Leader access in Employees &amp; access.</p></div>') +
+        (unplaced.length ? '<div class="stack" style="gap:12px"><div class="card-head" style="margin:0"><h3>Not in the chart yet <span class="faint num" style="font-weight:600">(' + unplaced.length + ')</span></h3>' +
+          '<span class="row" style="gap:8px"><span class="faint" style="font-size:13.5px">No leader set. People Ops approves their leave until they get one.</span><button class="btn ghost sm" data-action="org-toggle-unassigned">' + (ui.orgShowUnassigned ? 'Hide' : 'Show all') + '</button></span></div>' +
+          (ui.orgShowUnassigned ? '<div class="oc-unplaced">' + unplaced.map(k => ocCard(k)).join('') + '</div>' : '') + '</div>' : '') +
+        '<p class="faint" style="font-size:13px">To change who reports to whom, open <button class="btn ghost sm" data-org-view="list">Edit list</button> or set Direct report to in Employees &amp; access.</p>';
     } else {
+      const leaders = all.filter(e => e.role !== 'reportee' && !placed(e));
+      const unassigned = all.filter(e => e.role === 'reportee' && !placed(e));
       body = '<div class="org">' + leaders.map(orgNode).join('') + '</div>' +
         (unassigned.length ? '<div class="stack"><div class="card-head" style="margin:0"><h3>No leader yet <span class="faint num" style="font-weight:600">(' + unassigned.length + ')</span></h3><span class="faint" style="font-size:13.5px">Pick a leader for each person. Until then People Ops approves their leave.</span></div><div class="org">' + unassigned.map(orgNode).join('') + '</div></div>' : '');
     }
     return {
       eyebrow: 'People Ops · Reporting line',
       title: 'Reporting line',
-      sub: 'Who reports to whom. A person\'s leader approves their leave, and People Ops can always approve too. Only leaders and HR admins can have reportees.',
+      sub: 'Who reports to whom. A person\'s leader approves their leave. People Ops can approve anyone\'s leave too.',
       body: tabs + body
     };
   };
@@ -1326,6 +1336,9 @@ td .input.sm { width: auto; min-width: 140px; }
       });
       sync();
     }
+
+    const ow = document.querySelector('.oc-wrap');
+    if (ow) ow.scrollLeft = (ow.scrollWidth - ow.clientWidth) / 2;
 
     const q = document.getElementById('emp-q');
     if (q) q.addEventListener('input', e => {
