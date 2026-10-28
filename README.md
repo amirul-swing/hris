@@ -19,22 +19,24 @@ The employee roster is **not** stored in this repository, because the repo is pu
 
 | Column | Notes |
 | --- | --- |
-| Name | Required |
+| Name | Required. `Nama Karyawan` also works |
+| Jabatan | Optional job title |
 | FT / PT | `FT` or `PT`. "Employed - Part Time" also reads as PT |
-| Entity | `Swing` or `GSA` |
 | Join Date | Date, e.g. `2024-06-10`. Drives paid leave |
 | Direct Report To | Leader's name. This leader approves their leave |
 | Access | `Reportee`, `Leader` or `HR admin` |
 | Username | Optional. Generated as `first.last` if empty |
 | Temporary Password | Optional. Generated if empty |
 
-Re-importing matches rows by username (then by name) and updates them. Passwords of existing accounts are not touched.
+Re-importing matches rows by username (then by name) and updates them. Passwords of existing accounts are not touched. Rows marked `(GSA)` are skipped, because that person already has an account from their main row.
+
+The **Jatah CUTI karyawan SWI** sheet can be imported directly. It reads `Nama Karyawan`, `Jabatan` and `Join Date`.
 
 ## Leave rules
 
-- **Paid leave**: 1 day is earned for every full month of service from the join date (someone who joined 10 Mar earns on 10 Apr, 10 May, and so on).
-- Days earned in a year stay valid that year and the next year, then expire on 31 Dec. The oldest days are used first. Both numbers can be changed in **Leave policy**.
-- A paid leave request is blocked if the person does not have enough valid days on the first day of leave.
+- **Paid leave**: 1 day is earned for every full month of service from the join date, for full time and part time. Someone who joined 10 Mar earns on 10 Apr, 10 May, and so on.
+- The balance resets on 1 Jan. Up to 5 unused days carry over into the next year and expire on 31 Dec of that year. Carried-over days are used first. Both numbers can be changed in **Leave policy**.
+- A paid leave request is blocked if the balance for that year is too small. A request this year is also blocked if it would cut the carry-over that leave already booked for next year depends on.
 - **Sick leave**: needs a surat sakit (doctor's note) attached. Does not use the paid balance.
 - **Other leave**: the employee must specify what it is for. Does not use the paid balance.
 - Days count working days only. Weekends and public holidays are skipped. Half days are possible for single-day requests.

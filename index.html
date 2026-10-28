@@ -253,11 +253,6 @@ td .input.sm { width: auto; min-width: 140px; }
 .org-node b { font-family: var(--font-display); }
 .org-node select { width: auto; max-width: 100%; min-height: 36px; padding: 6px 10px; font-size: 13.5px; }
 
-.timeline { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; margin-top: 12px; }
-.timeline div { text-align: center; font-size: 11px; color: var(--faint); }
-.timeline i { display: block; height: 26px; border-radius: 6px; background: var(--accent); margin-bottom: 4px; }
-.timeline i.y2 { background: var(--ink); }
-
 .cred { display: grid; gap: 12px; }
 .cred-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 1px dashed var(--line-strong); border-radius: 12px; padding: 12px 14px; background: var(--surface-2); flex-wrap: wrap; }
 .cred-row small { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; font-family: var(--font-display); }
@@ -299,7 +294,6 @@ td .input.sm { width: auto; min-width: 140px; }
   .grid-4 { grid-template-columns: minmax(0, 1fr); }
   .form-grid, .form-grid.hol-grid { grid-template-columns: minmax(0, 1fr); }
   .tile .big { font-size: 38px; }
-  .timeline { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -368,7 +362,7 @@ td .input.sm { width: auto; min-width: 140px; }
   }
 
   function rosterToEmployee(p) {
-    return { id: p.username, name: p.name, status: p.ftpt === 'PT' ? 'PT' : 'FT', entity: p.entity || 'Swing', country: 'ID', joinDate: '', managerId: null,
+    return { id: p.username, name: p.name, status: p.ftpt === 'PT' ? 'PT' : 'FT', title: p.title || '', country: 'ID', joinDate: p.joinDate || '', managerId: null,
       role: p.access === 'Leader' ? 'leader' : p.access === 'HR admin' ? 'admin' : 'reportee', password: p.password, mustChange: true, active: true };
   }
 
@@ -376,9 +370,9 @@ td .input.sm { width: auto; min-width: 140px; }
     return {
       seq: { req: 0 },
       sessionUserId: null,
-      policy: { perMonth: 1, validYears: 2 },
+      policy: { perMonth: 1, carryCap: 5 },
       holidays: seedHolidays(),
-      employees: [{ id: 'admin', name: 'People Ops Admin', status: 'FT', entity: 'Swing', country: 'ID', joinDate: '', managerId: null, role: 'admin', system: true, password: 'swing-admin', mustChange: false, active: true }]
+      employees: [{ id: 'admin', name: 'People Ops Admin', status: 'FT', country: 'ID', joinDate: '', managerId: null, role: 'admin', system: true, password: 'swing-admin', mustChange: false, active: true }]
         .concat((PRELOADED_ROSTER || []).map(rosterToEmployee)),
       requests: []
     };
@@ -387,8 +381,18 @@ td .input.sm { width: auto; min-width: 140px; }
   // ---------- store ----------
   let state;
   function load() {
-    try { const raw = localStorage.getItem(STORE_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
+    try { const raw = localStorage.getItem(STORE_KEY); if (raw) return migrate(JSON.parse(raw)); } catch (e) {}
     return seed();
+  }
+  // Older saves used a 2-year validity rule and kept GSA rows as separate accounts.
+  function migrate(s) {
+    if (s.policy.carryCap == null) s.policy = { perMonth: s.policy.perMonth || 1, carryCap: 5 };
+    const merged = {};
+    s.employees = s.employees.filter(e => { if (/\.gsa\d*$/.test(e.id)) { merged[e.id] = e.id.replace(/\.gsa\d*$/, ''); return false; } delete e.entity; return true; });
+    s.employees.forEach(e => { if (merged[e.managerId]) e.managerId = merged[e.managerId]; });
+    s.requests.forEach(r => { if (merged[r.empId]) r.empId = merged[r.empId]; });
+    if (merged[s.sessionUserId]) s.sessionUserId = null;
+    return s;
   }
   function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
 
@@ -415,38 +419,54 @@ td .input.sm { width: auto; min-width: 140px; }
     return { days, skipped };
   }
 
-  // Paid leave: perMonth days earned on each monthly anniversary of the join date.
-  // Days earned in year Y stay valid until 31 Dec of year Y + validYears - 1. Leave uses the oldest valid days first.
+  // Paid leave: perMonth days earned on each monthly anniversary of the join date, full time and part time alike.
+  // The balance resets each year. Up to carryCap unused days earned in year Y move into Y+1 and expire on 31 Dec of Y+1.
+  // Leave in a year uses carried-over days first, then days earned that year.
   function paidLedger(e, extra) {
-    const t = todayISO(), year = thisYear();
-    const lots = [];
+    const t = todayISO(), year = thisYear(), cap = state.policy.carryCap, per = state.policy.perMonth;
+    const earned = {};
+    let firstYear = year;
     if (e.joinDate) {
+      firstYear = Math.min(year, Number(e.joinDate.slice(0, 4)));
       for (let k = 1; k < 1200; k++) {
         const d = addMonths(e.joinDate, k);
         if (d > t) break;
-        lots.push({ earnedOn: d, expiresOn: (Number(d.slice(0, 4)) + state.policy.validYears - 1) + '-12-31', left: state.policy.perMonth });
+        const y = Number(d.slice(0, 4));
+        earned[y] = (earned[y] || 0) + per;
       }
     }
     const uses = state.requests.filter(r => r.empId === e.id && r.type === 'PL' && (r.status === 'approved' || r.status === 'pending'))
       .concat(extra ? [extra] : []).sort((a, b) => a.start.localeCompare(b.start));
-    let short = 0;
-    uses.forEach(r => {
-      let need = r.days;
-      lots.forEach(l => { if (need > 0 && l.left > 0 && l.expiresOn >= r.start) { const take = Math.min(l.left, need); l.left -= take; need -= take; } });
-      if (r === extra) short = need;
-    });
-    const validAt = d => lots.filter(l => l.expiresOn >= d).reduce((a, l) => a + l.left, 0);
+    const lastYear = uses.reduce((m, r) => Math.max(m, Number(r.start.slice(0, 4))), year);
+    const years = {};
+    let carryIn = 0, short = 0, shortTotal = 0;
+    for (let y = firstYear; y <= lastYear + 1; y++) {
+      let carry = carryIn, fresh = earned[y] || 0;
+      uses.filter(r => Number(r.start.slice(0, 4)) === y).forEach(r => {
+        let need = r.days, take = Math.min(carry, need);
+        carry -= take; need -= take;
+        take = Math.min(fresh, need); fresh -= take; need -= take;
+        shortTotal += need;
+        if (r === extra) short = need;
+      });
+      years[y] = { carryIn, carryLeft: carry, earned: earned[y] || 0, freshLeft: fresh };
+      carryIn = Math.min(cap, fresh);
+    }
+    const validAt = d => { const y = years[Number(d.slice(0, 4))]; return y ? y.carryLeft + y.freshLeft : 0; };
+    const cur = years[year];
     const mine = state.requests.filter(r => r.empId === e.id && r.type === 'PL' && r.start.slice(0, 4) === String(year));
     const next = e.joinDate ? (() => { let k = 1, d; do { d = addMonths(e.joinDate, k++); } while (d <= t); return d; })() : null;
     return {
       hasJoin: !!e.joinDate,
       available: validAt(t),
-      earnedThisYear: lots.filter(l => l.earnedOn.slice(0, 4) === String(year)).length * state.policy.perMonth,
-      carried: lots.filter(l => l.earnedOn.slice(0, 4) < String(year) && l.expiresOn >= t).reduce((a, l) => a + l.left, 0),
-      expiringThisYear: lots.filter(l => l.expiresOn === year + '-12-31').reduce((a, l) => a + l.left, 0),
+      earnedThisYear: cur.earned,
+      carried: cur.carryIn,
+      carriedLeft: cur.carryLeft,
+      carryToNext: Math.min(cap, cur.freshLeft),
+      lostAtYearEnd: cur.carryLeft + Math.max(0, cur.freshLeft - cap),
       used: mine.filter(r => r.status === 'approved').reduce((a, r) => a + r.days, 0),
       pending: mine.filter(r => r.status === 'pending').reduce((a, r) => a + r.days, 0),
-      next, short, validAt
+      next, short, shortTotal, validAt
     };
   }
   const takenThisYear = (e, code) => state.requests.filter(r => r.empId === e.id && r.type === code && r.status === 'approved' && r.start.slice(0, 4) === String(thisYear())).reduce((a, r) => a + r.days, 0);
@@ -469,13 +489,13 @@ td .input.sm { width: auto; min-width: 140px; }
   }
   function leaderOptions(forId, selected, blankLabel) {
     const opts = state.employees.filter(e => !e.system && (e.active || e.id === selected) && e.id !== forId && (e.role === 'leader' || e.role === 'admin') && !(forId && isBelow(e.id, forId)));
-    return '<option value="">' + (blankLabel || 'Not set (People Ops approves)') + '</option>' + opts.map(e => '<option value="' + e.id + '"' + (selected === e.id ? ' selected' : '') + '>' + esc(e.name) + (e.entity === 'GSA' ? ' (GSA)' : '') + '</option>').join('');
+    return '<option value="">' + (blankLabel || 'Not set (People Ops approves)') + '</option>' + opts.map(e => '<option value="' + e.id + '"' + (selected === e.id ? ' selected' : '') + '>' + esc(e.name) + '</option>').join('');
   }
 
-  function makeUsername(name, entity) {
-    const tokens = name.replace(/\(gsa\)/ig, '').toLowerCase().replace(/[^a-z ]/g, ' ').split(/\s+/).filter(t => t.length > 1);
+  function makeUsername(name) {
+    const tokens = name.toLowerCase().replace(/[^a-z ]/g, ' ').split(/\s+/).filter(t => t.length > 1);
     if (!tokens.length) return null;
-    const base = (tokens.length === 1 ? tokens[0] : tokens[0] + '.' + tokens[tokens.length - 1]) + (entity === 'GSA' ? '.gsa' : '');
+    const base = (tokens.length === 1 ? tokens[0] : tokens[0] + '.' + tokens[tokens.length - 1]);
     let cand = base, n = 2;
     while (emp(cand)) cand = base + n++;
     return cand;
@@ -493,7 +513,7 @@ td .input.sm { width: auto; min-width: 140px; }
   const statusPill = s => '<span class="pill ' + s + '">' + s[0].toUpperCase() + s.slice(1) + '</span>';
   const isOn = (r, iso) => r.start <= iso && r.end >= iso && !isWeekend(iso);
   const avatar = (e, extra) => '<span class="avatar' + (e.role !== 'reportee' ? ' leader' : '') + (extra ? ' ' + extra : '') + '">' + initials(e.name) + '</span>';
-  const subline = e => STATUS_LABEL[e.status] + (e.entity === 'GSA' ? ' · GSA' : '') + (e.role !== 'reportee' ? ' · ' + ROLE_LABEL[e.role] : '');
+  const subline = e => (e.title ? esc(e.title) + ' · ' : '') + STATUS_LABEL[e.status] + (e.role !== 'reportee' ? ' · ' + ROLE_LABEL[e.role] : '');
 
   // ---------- toast / modal ----------
   let toastTimer;
@@ -533,7 +553,7 @@ td .input.sm { width: auto; min-width: 140px; }
         '<div class="hero-cards">' +
           '<div>Paid leave<strong>+1 day every month</strong></div>' +
           '<div>Sick leave<strong>With surat sakit</strong></div>' +
-          '<div>Carry over<strong>Valid for 2 years</strong></div>' +
+          '<div>Carry over<strong>Up to ' + state.policy.carryCap + ' days</strong></div>' +
         '</div>' +
       '</section>' +
       '<section class="login-panel"><div class="login-box">' +
@@ -608,9 +628,10 @@ td .input.sm { width: auto; min-width: 140px; }
     const total = Math.ceil(L.available + L.used + L.pending);
     let dots = '';
     for (let i = 0; i < Math.min(total, 36); i++) dots += '<i class="' + (i < L.used ? 'used' : i < L.used + L.pending ? 'pend' : 'avail') + '"></i>';
+    const y = thisYear(), cap = state.policy.carryCap;
     return '<div class="card tile"><span class="label">Paid leave available</span><div class="big num accent">' + fmtNum(L.available) + '</div><div class="of">days you can book now</div><div class="dots" aria-hidden="true">' + dots + '</div><div class="meta num"><span>' + fmtNum(L.used) + ' used this year</span><span>' + fmtNum(L.pending) + ' pending</span></div></div>' +
-      '<div class="card tile"><span class="label">Earned in ' + thisYear() + '</span><div class="big num">' + fmtNum(L.earnedThisYear) + '</div><div class="of">+' + fmtNum(state.policy.perMonth) + ' on ' + fmt(L.next) + '</div><div class="meta num"><span>' + fmtNum(L.carried) + ' carried over from earlier years</span></div></div>' +
-      '<div class="card tile"><span class="label">Expires 31 Dec ' + thisYear() + '</span><div class="big num">' + fmtNum(L.expiringThisYear) + '</div><div class="of">' + (L.expiringThisYear ? 'Use these first. They are not carried over again.' : 'Nothing expires this year.') + '</div></div>';
+      '<div class="card tile"><span class="label">Earned in ' + y + '</span><div class="big num">' + fmtNum(L.earnedThisYear) + '</div><div class="of">+' + fmtNum(state.policy.perMonth) + ' on ' + fmt(L.next) + '</div><div class="meta num"><span>' + (L.carried ? fmtNum(L.carried) + ' carried in from ' + (y - 1) + ', ' + fmtNum(L.carriedLeft) + ' left' : 'Nothing carried in from ' + (y - 1)) + '</span></div></div>' +
+      '<div class="card tile"><span class="label">Carries into ' + (y + 1) + '</span><div class="big num">' + fmtNum(L.carryToNext) + '</div><div class="of">' + (L.lostAtYearEnd ? fmtDays(L.lostAtYearEnd) + ' will be lost on 31 Dec if not used.' : 'Nothing is lost on 31 Dec.') + '</div><div class="meta"><span>Up to ' + fmtDays(cap) + ' carry over</span></div></div>';
   }
 
   function holidayList(country, from, limit) {
@@ -639,7 +660,7 @@ td .input.sm { width: auto; min-width: 140px; }
           '</div>' +
           '<div class="card"><div class="card-head"><h3>Next public holidays</h3><span class="tag plain">' + COUNTRIES[u.country] + '</span></div>' + holidayList(u.country, t, 4) + '</div>' +
         '</section>' +
-        '<div class="note"><div><b>How paid leave works.</b> You earn ' + fmtDays(state.policy.perMonth) + ' for every full month since your join date. Days earned in a year can be used that year and ' + (state.policy.validYears > 1 ? 'the next ' + (state.policy.validYears === 2 ? 'year' : (state.policy.validYears - 1) + ' years') : 'not after') + ', then they expire. Your oldest days are used first.</div></div>'
+        '<div class="note"><div><b>How paid leave works.</b> You earn ' + fmtDays(state.policy.perMonth) + ' for every full month since your join date. Your balance resets each year. Up to ' + fmtDays(state.policy.carryCap) + ' you did not use move into the next year and must be used by 31 Dec of that year. Carried-over days are used first.</div></div>'
     };
   };
 
@@ -702,7 +723,9 @@ td .input.sm { width: auto; min-width: 140px; }
     if (d.type === 'PL') {
       if (!u.joinDate) return 'Your join date is not set yet, so you have no paid leave. Ask People Ops to add it, or pick Other leave.';
       const L = paidLedger(u, { start: d.start, days: c.days });
-      if (L.short > 0) return 'You have ' + fmtDays(paidLedger(u).validAt(d.start)) + ' of paid leave available for ' + fmt(d.start) + ' and this request needs ' + fmtDays(c.days) + '. Shorten it, or pick Other leave for the rest.';
+      const before = paidLedger(u);
+      if (L.short > 0) return 'You have ' + fmtDays(before.validAt(d.start)) + ' of paid leave available for ' + fmt(d.start) + ' and this request needs ' + fmtDays(c.days) + '. Shorten it, or pick Other leave for the rest.';
+      if (L.shortTotal > before.shortTotal) return 'This would leave your paid leave booked for next year without enough days, because fewer days would carry over. Shorten this request or move the other one.';
     }
     if (d.type === 'SL' && !d.attachment) return 'Sick leave needs a surat sakit (doctor\'s note). Attach it to continue.';
     if (d.type === 'OL' && d.specify.trim().length < 3) return 'Specify what the leave is for, so your leader can review it.';
@@ -754,7 +777,7 @@ td .input.sm { width: auto; min-width: 140px; }
   VIEWS.account = u => {
     const m = u.managerId && emp(u.managerId);
     const rows = [['Username', '<span class="mono">' + esc(u.id) + '</span>'], ['Access', ROLE_LABEL[u.role]]];
-    if (!u.system) rows.push(['Employment', STATUS_LABEL[u.status] + ' · ' + esc(u.entity)], ['Join date', u.joinDate ? fmt(u.joinDate) : '<span class="faint">Not set</span>'], ['Reports to', m ? esc(m.name) : '<span class="faint">Not set</span>']);
+    if (!u.system) rows.push(['Job title', u.title ? esc(u.title) : '<span class="faint">Not set</span>'], ['Employment', STATUS_LABEL[u.status]], ['Join date', u.joinDate ? fmt(u.joinDate) : '<span class="faint">Not set</span>'], ['Reports to', m ? esc(m.name) : '<span class="faint">Not set</span>']);
     return {
       eyebrow: 'Settings',
       title: 'Your account',
@@ -931,7 +954,7 @@ td .input.sm { width: auto; min-width: 140px; }
   const EMP_FILTERS = [['all', 'All'], ['FT', 'Full time'], ['PT', 'Part time'], ['leaders', 'Leaders'], ['nojoin', 'No join date'], ['noleader', 'No leader']];
   function empMatches(e) {
     const q = ui.empQuery.trim().toLowerCase();
-    if (q && !(e.name + ' ' + e.id + ' ' + e.entity + ' ' + ROLE_LABEL[e.role]).toLowerCase().includes(q)) return false;
+    if (q && !(e.name + ' ' + e.id + ' ' + (e.title || '') + ' ' + ROLE_LABEL[e.role]).toLowerCase().includes(q)) return false;
     switch (ui.empFilter) {
       case 'FT': case 'PT': return e.status === ui.empFilter;
       case 'leaders': return e.role !== 'reportee';
@@ -954,7 +977,7 @@ td .input.sm { width: auto; min-width: 140px; }
           '<div class="seg">' + EMP_FILTERS.map(([k, l]) => '<button data-emp-filter="' + k + '" class="' + (ui.empFilter === k ? 'on' : '') + '">' + l + '</button>').join('') + '</div></div><span class="faint num">' + list.length + ' of ' + all.length + '</span></div>' +
         '<div class="table-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>FT / PT</th><th>Join date</th><th>Direct report to</th><th>Access</th><th>Paid leave</th><th>Status</th><th></th></tr></thead><tbody>' +
           (list.length ? list.map(e => { const L = paidLedger(e); return '<tr>' +
-            '<td><div class="row" style="flex-wrap:nowrap">' + avatar(e) + '<div><b>' + esc(e.name) + '</b>' + (e.entity === 'GSA' ? '<div class="faint" style="font-size:12.5px">GSA</div>' : '') + '</div></div></td>' +
+            '<td><div class="row" style="flex-wrap:nowrap">' + avatar(e) + '<div><b>' + esc(e.name) + '</b>' + (e.title ? '<div class="faint" style="font-size:12.5px">' + esc(e.title) + '</div>' : '') + '</div></div></td>' +
             '<td class="mono">' + esc(e.id) + (e.mustChange ? '<div style="font-family:var(--font-body);font-size:12px">' + (ui.revealed === e.id ? '<span class="mono" style="user-select:all">' + esc(e.password) + '</span> <button class="btn ghost sm" data-action="hide-pw">Hide</button>' : '<span class="faint">Temporary password</span> <button class="btn ghost sm" data-action="reveal-pw" data-id="' + esc(e.id) + '">Show</button>') + '</div>' : '') + '</td>' +
             '<td>' + e.status + '</td>' +
             '<td><input class="input sm' + (e.joinDate ? '' : ' missing') + '" type="date" data-join="' + esc(e.id) + '" id="join-' + esc(e.id) + '" value="' + e.joinDate + '" aria-label="Join date of ' + esc(e.name) + '"></td>' +
@@ -974,7 +997,7 @@ td .input.sm { width: auto; min-width: 140px; }
     return '<div class="org-item"><div class="org-node' + (e.role !== 'reportee' ? ' leader' : '') + '" style="' + (e.active ? '' : 'opacity:.5') + '">' +
       avatar(e) +
       '<div class="grow"><b>' + esc(e.name) + '</b> ' + (e.role === 'reportee' ? '' : '<span class="tag">' + ROLE_LABEL[e.role] + '</span>') +
-        '<div class="faint" style="font-size:13px">' + STATUS_LABEL[e.status] + (e.entity === 'GSA' ? ' · GSA' : '') + (kids.length ? ' · approves for ' + kids.length : '') + (e.active ? '' : ' · deactivated') + '</div></div>' +
+        '<div class="faint" style="font-size:13px">' + STATUS_LABEL[e.status] + (kids.length ? ' · approves for ' + kids.length : '') + (e.active ? '' : ' · deactivated') + '</div></div>' +
       '<label class="row" style="gap:8px;flex-wrap:nowrap"><span class="faint" style="font-size:13px">Reports to</span><select class="input" data-org="' + esc(e.id) + '" id="org-' + esc(e.id) + '" aria-label="Leader of ' + esc(e.name) + '">' + leaderOptions(e.id, e.managerId, 'No one') + '</select></label>' +
     '</div>' + (kids.length ? '<div class="org-children">' + kids.map(orgNode).join('') + '</div>' : '') + '</div>';
   }
@@ -1004,26 +1027,24 @@ td .input.sm { width: auto; min-width: 140px; }
   VIEWS['a-policy'] = () => {
     const p = state.policy;
     const y = thisYear();
-    let tl = '';
-    for (let m = 0; m < 12; m++) tl += '<div><i></i>' + new Date(y - 1, m, 1).toLocaleDateString('en-GB', { month: 'short' }) + '</div>';
-    let tl2 = '';
-    for (let m = 0; m < 12; m++) tl2 += '<div><i class="y2"></i>' + new Date(y, m, 1).toLocaleDateString('en-GB', { month: 'short' }) + '</div>';
+    const earnedPrev = 9 * p.perMonth, usedPrev = Math.min(3, earnedPrev), carried = Math.min(p.carryCap, earnedPrev - usedPrev), lost = earnedPrev - usedPrev - carried;
     return {
       eyebrow: 'People Ops · Policy',
       title: 'Leave policy',
-      sub: 'Paid leave builds up every month from the join date. Sick leave needs a surat sakit. Other leave must say what it is for.',
-      body: '<form id="policy-form" class="card stack" novalidate><h3>Paid leave accrual</h3>' +
+      sub: 'Paid leave builds up every month from the join date, for full time and part time. Sick leave needs a surat sakit. Other leave must say what it is for.',
+      body: '<form id="policy-form" class="card stack" novalidate><h3>Paid leave</h3>' +
           '<div class="form-grid">' +
             '<label class="field"><span>Days earned per full month of service</span><input class="input num" type="number" min="0" max="5" step="0.5" id="pol-per" value="' + p.perMonth + '"><small>Counted from the join date. Someone who joined on 10 Mar earns on 10 Apr, 10 May, and so on.</small></label>' +
-            '<label class="field"><span>Earned days stay valid for (calendar years)</span><input class="input num" type="number" min="1" max="5" step="1" id="pol-valid" value="' + p.validYears + '"><small>2 means days earned in ' + (y - 1) + ' can be used until 31 Dec ' + y + ', then expire.</small></label>' +
+            '<label class="field"><span>Most days carried into next year</span><input class="input num" type="number" min="0" max="30" step="0.5" id="pol-cap" value="' + p.carryCap + '"><small>The balance resets on 1 Jan. Unused days up to this number move into the next year and expire on 31 Dec of that year.</small></label>' +
           '</div>' +
-          '<div><span class="label">Example with the current setting</span>' +
-            '<p class="muted" style="margin-top:6px;font-size:14px">Each block is one day earned. Days earned in ' + (y - 1) + ' (purple) carry over into ' + y + ' and expire on 31 Dec ' + (y - 2 + p.validYears) + '. Days earned in ' + y + ' (black) expire on 31 Dec ' + (y - 1 + p.validYears) + '. The oldest days are used first.</p>' +
-            '<div class="timeline">' + tl + '</div><div class="timeline">' + tl2 + '</div></div>' +
+          '<div class="card hl" style="box-shadow:none"><span class="label">Example</span>' +
+            '<p style="margin-top:8px;font-size:14px">Someone joins on 10 Mar ' + (y - 1) + '. They earn ' + fmtDays(earnedPrev) + ' in ' + (y - 1) + ' (Apr to Dec) and use ' + fmtDays(usedPrev) + '. ' +
+            'On 1 Jan ' + y + ', ' + fmtDays(carried) + ' carry over' + (lost ? ' and ' + fmtDays(lost) + ' ' + (lost === 1 ? 'is' : 'are') + ' lost' : '') + '. ' +
+            'In ' + y + ' they earn up to ' + fmtDays(12 * p.perMonth) + ' more. The carried-over days are used first and expire on 31 Dec ' + y + '.</p></div>' +
           '<div class="row"><button class="btn primary" type="submit">Save policy</button><span class="faint" style="font-size:13px">Balances update for everyone straight away.</span></div>' +
         '</form>' +
         '<div class="card"><div class="table-wrap"><table><thead><tr><th>Leave type</th><th>Uses paid balance</th><th>Required</th></tr></thead><tbody>' +
-          '<tr><td><b>Paid leave</b> <span class="faint mono">PL</span></td><td>Yes</td><td>Enough earned days on the first day of leave</td></tr>' +
+          '<tr><td><b>Paid leave</b> <span class="faint mono">PL</span></td><td>Yes</td><td>Enough days in the balance for the year of the leave</td></tr>' +
           '<tr><td><b>Sick leave</b> <span class="faint mono">SL</span></td><td>No</td><td>Surat sakit (doctor\'s note) attached</td></tr>' +
           '<tr><td><b>Other leave</b> <span class="faint mono">OL</span></td><td>No</td><td>Employee specifies what the leave is for</td></tr>' +
         '</tbody></table></div></div>'
@@ -1059,27 +1080,30 @@ td .input.sm { width: auto; min-width: 140px; }
 
   function importRows(rows) {
     const pick = (row, ...names) => { const k = Object.keys(row).find(h => names.includes(h.trim().toLowerCase())); return k == null ? '' : row[k]; };
-    const result = { created: [], updated: 0, join: 0, leaders: 0, warnings: [] };
+    const result = { created: [], updated: 0, join: 0, leaders: 0, merged: 0, warnings: [] };
     const pendingLeaders = [];
     rows.forEach((row, i) => {
-      const name = String(pick(row, 'name') || '').replace(/\s+/g, ' ').trim();
+      const name = String(pick(row, 'name', 'nama karyawan', 'nama') || '').replace(/\s+/g, ' ').trim();
       if (!name || /^total$/i.test(name)) return;
+      if (/\(gsa\)/i.test(name)) { result.merged++; return; }
       const statusRaw = String(pick(row, 'ft / pt', 'ft/pt', 'status', 'employment status') || '').trim();
-      const status = /^pt$|part/i.test(statusRaw) ? 'PT' : 'FT';
-      const entity = /gsa/i.test(String(pick(row, 'entity') || '')) || /\(gsa\)/i.test(name) ? 'GSA' : 'Swing';
+      const title = String(pick(row, 'jabatan', 'title', 'job title') || '').trim();
+      const status = /^pt$|part/i.test(statusRaw || title) ? 'PT' : 'FT';
       const accessRaw = String(pick(row, 'access') || '').trim().toLowerCase();
       let username = String(pick(row, 'username') || '').trim().toLowerCase();
       let e = (username && emp(username)) || state.employees.find(x => !x.system && x.name.toLowerCase() === name.toLowerCase());
       if (!e) {
-        username = username || makeUsername(name, entity);
+        username = username || makeUsername(name);
         if (!username || emp(username)) { result.warnings.push('Row ' + (i + 2) + ': could not make a unique username for ' + name + '.'); return; }
         const pw = String(pick(row, 'temporary password', 'password') || '').trim() || generatePassword();
-        e = { id: username, name, status, entity, country: 'ID', joinDate: '', managerId: null, role: 'reportee', password: pw, mustChange: true, active: true };
+        e = { id: username, name, status, title, country: 'ID', joinDate: '', managerId: null, role: 'reportee', password: pw, mustChange: true, active: true };
         state.employees.push(e);
         result.created.push(e.id);
       } else {
         result.updated++;
-        Object.assign(e, { name, status, entity });
+        e.name = name;
+        if (statusRaw) e.status = status;
+        if (title) e.title = title;
       }
       if (accessRaw) e.role = accessRaw.startsWith('hr') || accessRaw === 'admin' ? 'admin' : accessRaw.startsWith('leader') ? 'leader' : 'reportee';
       const join = cellISO(pick(row, 'join date', 'joined', 'join_date'));
@@ -1091,7 +1115,7 @@ td .input.sm { width: auto; min-width: 140px; }
     pendingLeaders.forEach(([e, leaderName]) => {
       const key = leaderName.toLowerCase();
       const candidates = state.employees.filter(x => !x.system && x.id !== e.id && (x.name.toLowerCase() === key || x.name.toLowerCase().startsWith(key + ' ')));
-      const leader = candidates.find(x => x.entity === 'Swing') || candidates[0];
+      const leader = candidates[0];
       if (!leader) { result.warnings.push(e.name + ': leader "' + leaderName + '" is not in the list.'); return; }
       if (isBelow(leader.id, e.id)) { result.warnings.push(e.name + ': ' + leader.name + ' already reports to them, so this would make a loop. Skipped.'); return; }
       if (leader.role === 'reportee') leader.role = 'leader';
@@ -1106,9 +1130,9 @@ td .input.sm { width: auto; min-width: 140px; }
     reader.onload = () => {
       try {
         const wb = XLSX.read(new Uint8Array(reader.result), { type: 'array', cellDates: true });
-        const sheetName = wb.SheetNames.find(n => /master/i.test(n)) || wb.SheetNames[0];
+        const sheetName = wb.SheetNames.find(n => /master|jatah/i.test(n)) || wb.SheetNames[0];
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '', raw: true });
-        if (!rows.length || !Object.keys(rows[0]).some(h => h.trim().toLowerCase() === 'name')) { toast('No "Name" column found on sheet ' + sheetName + '. Use the master data file.'); return; }
+        if (!rows.length || !Object.keys(rows[0]).some(h => ['name', 'nama', 'nama karyawan'].includes(h.trim().toLowerCase()))) { toast('No "Name" column found on sheet ' + sheetName + '. Use the master data file.'); return; }
         const res = importRows(rows);
         save();
         openModal({ kind: 'import-result', res, file: file.name });
@@ -1123,13 +1147,12 @@ td .input.sm { width: auto; min-width: 140px; }
   function modalView(m) {
     if (m.kind === 'add-emp' || m.kind === 'edit-emp') {
       const editing = m.kind === 'edit-emp';
-      const e = editing ? emp(m.id) : { name: '', status: 'FT', entity: 'Swing', joinDate: '', role: 'reportee', managerId: '' };
+      const e = editing ? emp(m.id) : { name: '', status: 'FT', joinDate: '', role: 'reportee', managerId: '' };
       const sel = (v, cur) => v === cur ? ' selected' : '';
       return '<div><div class="eyebrow">' + (editing ? 'Edit · ' + esc(e.id) : 'New account') + '</div><h2 style="margin-top:8px">' + (editing ? esc(e.name) : 'Create an account') + '</h2><p class="muted" style="margin-top:6px">' + (editing ? 'The username stays the same.' : 'We generate the username and a temporary password.') + '</p></div>' +
         '<form id="emp-form" class="stack" novalidate data-edit="' + (editing ? esc(e.id) : '') + '"><div class="form-grid">' +
           '<label class="field full"><span>Full name</span><input class="input" id="ne-name" placeholder="e.g. Putri Anggraini" value="' + esc(e.name) + '"></label>' +
           '<label class="field"><span>FT / PT</span><select class="input" id="ne-status">' + ['FT', 'PT'].map(s => '<option value="' + s + '"' + sel(s, e.status) + '>' + STATUS_LABEL[s] + '</option>').join('') + '</select></label>' +
-          '<label class="field"><span>Entity</span><select class="input" id="ne-entity"' + (editing ? ' disabled' : '') + '>' + ['Swing', 'GSA'].map(s => '<option' + sel(s, e.entity) + '>' + s + '</option>').join('') + '</select></label>' +
           '<label class="field"><span>Join date</span><input class="input" type="date" id="ne-join" value="' + e.joinDate + '"><small>Paid leave builds up from this date.</small></label>' +
           '<label class="field"><span>Access</span><select class="input" id="ne-role">' + ['reportee', 'leader', 'admin'].map(r => '<option value="' + r + '"' + sel(r, e.role) + '>' + ROLE_LABEL[r] + '</option>').join('') + '</select></label>' +
           '<label class="field full"><span>Direct report to</span><select class="input" id="ne-manager">' + leaderOptions(editing ? e.id : null, e.managerId) + '</select><small>This leader approves their leave. People Ops can always approve too.</small></label>' +
@@ -1152,6 +1175,7 @@ td .input.sm { width: auto; min-width: 140px; }
         '<div class="grid-2" style="gap:10px">' +
           [['New accounts', r.created.length], ['Updated', r.updated], ['Join dates set', r.join], ['Leaders set', r.leaders]].map(([k, v]) => '<div class="card" style="padding:14px;box-shadow:none"><div style="font-family:var(--font-display);font-weight:800;font-size:28px" class="num">' + v + '</div><div class="muted" style="font-size:13px">' + k + '</div></div>').join('') +
         '</div>' +
+        (r.merged ? '<p class="muted" style="font-size:14px">Skipped ' + r.merged + ' (GSA) ' + (r.merged === 1 ? 'row' : 'rows') + '. Those people already have one account from their main row.</p>' : '') +
         (r.created.length ? '<p class="muted" style="font-size:14px">New accounts use the temporary password from the file, or a generated one if the file had none. Everyone must set a new password at first sign-in.</p>' : '') +
         (r.warnings.length ? '<div class="note warn"><div><b>' + r.warnings.length + ' ' + (r.warnings.length === 1 ? 'row needs' : 'rows need') + ' a look</b><ul style="margin:6px 0 0;padding-left:18px">' + r.warnings.slice(0, 12).map(w => '<li>' + esc(w) + '</li>').join('') + '</ul>' + (r.warnings.length > 12 ? '<div>and ' + (r.warnings.length - 12) + ' more</div>' : '') + '</div></div>' : '') +
         '<div class="modal-actions"><button class="btn primary" data-action="close-modal">Done</button></div>';
@@ -1260,9 +1284,9 @@ td .input.sm { width: auto; min-width: 140px; }
     const polf = document.getElementById('policy-form');
     if (polf) polf.addEventListener('submit', ev => {
       ev.preventDefault();
-      const per = Number(document.getElementById('pol-per').value), valid = Math.round(Number(document.getElementById('pol-valid').value));
-      if (!(per >= 0 && per <= 5) || !(valid >= 1 && valid <= 5)) { toast('Days per month must be 0 to 5 and validity 1 to 5 years'); return; }
-      state.policy = { perMonth: per, validYears: valid }; save(); render(); toast('Leave policy saved');
+      const per = Number(document.getElementById('pol-per').value), cap = Number(document.getElementById('pol-cap').value);
+      if (!(per >= 0 && per <= 5) || !(cap >= 0 && cap <= 30)) { toast('Days per month must be 0 to 5 and carry-over 0 to 30'); return; }
+      state.policy = { perMonth: per, carryCap: cap }; save(); render(); toast('Leave policy saved');
     });
 
     const hf = document.getElementById('hol-form');
@@ -1278,9 +1302,8 @@ td .input.sm { width: auto; min-width: 140px; }
     const ef = document.getElementById('emp-form');
     if (ef) {
       const editId = ef.dataset.edit;
-      const preview = () => { if (editId) return; const n = document.getElementById('ne-name').value.trim(); const un = n ? makeUsername(n, document.getElementById('ne-entity').value) : null; document.getElementById('ne-preview').textContent = un ? 'Username will be ' + un + '.' : ''; };
+      const preview = () => { if (editId) return; const n = document.getElementById('ne-name').value.trim(); const un = n ? makeUsername(n) : null; document.getElementById('ne-preview').textContent = un ? 'Username will be ' + un + '.' : ''; };
       document.getElementById('ne-name').addEventListener('input', preview);
-      document.getElementById('ne-entity').addEventListener('change', preview);
       ef.addEventListener('submit', ev => {
         ev.preventDefault();
         const name = document.getElementById('ne-name').value.replace(/\s+/g, ' ').trim();
@@ -1295,11 +1318,10 @@ td .input.sm { width: auto; min-width: 140px; }
           Object.assign(e, fields); save(); ui.modal = null; render(); toast(e.name + ' updated');
           return;
         }
-        const entity = document.getElementById('ne-entity').value;
-        const id = makeUsername(name, entity);
+        const id = makeUsername(name);
         if (!id) return showError('ne-error', 'The name needs at least one word of two letters or more to make a username.');
         const password = generatePassword();
-        state.employees.push(Object.assign({ id, entity, country: 'ID', password, mustChange: true, active: true }, fields));
+        state.employees.push(Object.assign({ id, country: 'ID', password, mustChange: true, active: true }, fields));
         save();
         openModal({ kind: 'creds', id, password });
       });
